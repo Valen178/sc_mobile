@@ -87,24 +87,32 @@ public class RegisterActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     SignupResponse signupResponse = response.body();
 
-                    if (signupResponse.isSuccess()) {
-                        // Guardar token temporalmente
-                        String token = signupResponse.getToken();
+                    // Log para debug
+                    android.util.Log.d("RegisterActivity", "Success: " + signupResponse.isSuccess());
+                    android.util.Log.d("RegisterActivity", "Message: " + signupResponse.getMessage());
+                    android.util.Log.d("RegisterActivity", "Token: " + signupResponse.getToken());
+                    android.util.Log.d("RegisterActivity", "UserId: " + signupResponse.getUserId());
 
-                        Toast.makeText(RegisterActivity.this, "Usuario registrado. Selecciona tu tipo de perfil", Toast.LENGTH_SHORT).show();
-
-                        // Pasar a la siguiente pantalla para seleccionar tipo de perfil
-                        Intent intent = new Intent(RegisterActivity.this, SelectProfileActivity.class);
-                        intent.putExtra("email", email);
-                        intent.putExtra("password", password);
-                        intent.putExtra("token", token);
-                        intent.putExtra("userId", signupResponse.getUserId());
-                        startActivity(intent);
-                        finish();
-                    } else {
-                        Toast.makeText(RegisterActivity.this, signupResponse.getMessage(), Toast.LENGTH_LONG).show();
+                    // Mostrar mensaje del backend
+                    if (signupResponse.getMessage() != null && !signupResponse.getMessage().isEmpty()) {
+                        Toast.makeText(RegisterActivity.this, signupResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     }
+
+                    // Si la respuesta es exitosa (código HTTP 200-299), navegar a la siguiente pantalla
+                    // Guardar token temporalmente
+                    String token = signupResponse.getToken();
+
+                    // Pasar a la siguiente pantalla para seleccionar tipo de perfil
+                    Intent intent = new Intent(RegisterActivity.this, SelectProfileActivity.class);
+                    intent.putExtra("email", email);
+                    intent.putExtra("password", password);
+                    intent.putExtra("token", token);
+                    intent.putExtra("userId", signupResponse.getUserId());
+                    startActivity(intent);
+                    finish();
                 } else {
+                    android.util.Log.e("RegisterActivity", "Response code: " + response.code());
+                    android.util.Log.e("RegisterActivity", "Response message: " + response.message());
                     Toast.makeText(RegisterActivity.this, "Error en el registro: " + response.message(), Toast.LENGTH_LONG).show();
                 }
             }
@@ -112,6 +120,7 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<SignupResponse> call, Throwable t) {
                 buttonContinue.setEnabled(true);
+                android.util.Log.e("RegisterActivity", "Error de conexión", t);
                 Toast.makeText(RegisterActivity.this, "Error de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });

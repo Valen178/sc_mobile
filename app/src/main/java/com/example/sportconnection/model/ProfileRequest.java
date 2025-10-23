@@ -3,7 +3,8 @@ package com.example.sportconnection.model;
 import com.google.gson.annotations.SerializedName;
 
 public class ProfileRequest {
-    private String email;
+    @SerializedName("user_id")
+    private Integer userId;
 
     @SerializedName("profile_type")
     private String profileType;
@@ -46,12 +47,12 @@ public class ProfileRequest {
     }
 
     // Getters y Setters
-    public String getEmail() {
-        return email;
+    public Integer getUserId() {
+        return userId;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public String getProfileType() {

@@ -85,7 +85,7 @@ public class ProfileFormActivity extends AppCompatActivity {
 
     private void setupFormByProfileType() {
         switch (profileType) {
-            case "ATHLETE":
+            case "athlete":
                 titleProfileForm.setText("Perfil de Atleta");
                 // Todos los campos son visibles para atleta
                 editTextName.setHint("Nombre");
@@ -95,7 +95,7 @@ public class ProfileFormActivity extends AppCompatActivity {
                 editTextWeight.setVisibility(View.VISIBLE);
                 break;
 
-            case "AGENT":
+            case "agent":
                 titleProfileForm.setText("Perfil de Agente");
                 editTextName.setHint("Nombre");
                 editTextLastName.setVisibility(View.VISIBLE);
@@ -105,7 +105,7 @@ public class ProfileFormActivity extends AppCompatActivity {
                 editTextDescription.setHint("Descripción");
                 break;
 
-            case "TEAM":
+            case "team":
                 titleProfileForm.setText("Perfil de Equipo");
                 editTextName.setHint("Nombre del equipo");
                 editTextLastName.setVisibility(View.VISIBLE);
@@ -128,7 +128,7 @@ public class ProfileFormActivity extends AppCompatActivity {
             return false;
         }
 
-        if (profileType.equals("ATHLETE") || profileType.equals("AGENT")) {
+        if (profileType.equals("athlete") || profileType.equals("agent")) {
             String lastName = editTextLastName.getText().toString().trim();
             if (lastName.isEmpty()) {
                 Toast.makeText(this, "Por favor, ingresa el apellido", Toast.LENGTH_SHORT).show();
@@ -136,7 +136,7 @@ public class ProfileFormActivity extends AppCompatActivity {
             }
         }
 
-        if (profileType.equals("ATHLETE")) {
+        if (profileType.equals("athlete")) {
             String birthdate = editTextBirthdate.getText().toString().trim();
             String height = editTextHeight.getText().toString().trim();
             String weight = editTextWeight.getText().toString().trim();
@@ -160,7 +160,7 @@ public class ProfileFormActivity extends AppCompatActivity {
 
         // Crear el objeto ProfileRequest
         ProfileRequest profileRequest = new ProfileRequest();
-        profileRequest.setEmail(email);
+        profileRequest.setUserId(userId);
         profileRequest.setProfileType(profileType);
         profileRequest.setName(editTextName.getText().toString().trim());
         profileRequest.setDescription(editTextDescription.getText().toString().trim());
@@ -192,16 +192,16 @@ public class ProfileFormActivity extends AppCompatActivity {
         }
 
         // Campos específicos según el tipo de perfil
-        if (profileType.equals("ATHLETE")) {
+        if (profileType.equals("athlete")) {
             profileRequest.setLastName(editTextLastName.getText().toString().trim());
             profileRequest.setBirthdate(editTextBirthdate.getText().toString().trim());
             profileRequest.setHeight(editTextHeight.getText().toString().trim());
             profileRequest.setWeight(editTextWeight.getText().toString().trim());
-        } else if (profileType.equals("AGENT")) {
+        } else if (profileType.equals("agent")) {
             profileRequest.setLastName(editTextLastName.getText().toString().trim());
             // Para agente, la descripción puede incluir el nombre de la agencia
             // o puedes agregar un campo adicional
-        } else if (profileType.equals("TEAM")) {
+        } else if (profileType.equals("team")) {
             // Para TEAM, el campo lastName se usa como "job" (puesto/rol)
             profileRequest.setJob(editTextLastName.getText().toString().trim());
         }

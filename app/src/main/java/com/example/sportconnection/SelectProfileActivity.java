@@ -42,22 +42,20 @@ public class SelectProfileActivity extends AppCompatActivity {
         // Configurar listeners para las tarjetas
         cardAthlete.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                navigateToProfileForm("ATHLETE");
-            }
+            public void onClick(View v) {navigateToProfileForm("athlete");}
         });
 
         cardAgent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                navigateToProfileForm("AGENT");
+                navigateToProfileForm("agent");
             }
         });
 
         cardTeam.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                navigateToProfileForm("TEAM");
+                navigateToProfileForm("team");
             }
         });
     }

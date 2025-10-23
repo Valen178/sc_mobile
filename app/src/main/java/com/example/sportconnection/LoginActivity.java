@@ -26,7 +26,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText editTextEmail;
     private EditText editTextPassword;
     private Button buttonLogin;
-
+    
     private AuthRepository authRepository;
     private SessionManager sessionManager;
 
@@ -45,7 +45,7 @@ public class LoginActivity extends AppCompatActivity {
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
         buttonLogin = findViewById(R.id.buttonLogin);
-
+        
         // Inicializar repositorio y session manager
         authRepository = new AuthRepository();
         sessionManager = new SessionManager(this);
@@ -65,18 +65,18 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
-
+    
     private void loginUser(String email, String password) {
         buttonLogin.setEnabled(false);
-
+        
         authRepository.login(email, password, new Callback<LoginResponse>() {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 buttonLogin.setEnabled(true);
-
+                
                 if (response.isSuccessful() && response.body() != null) {
                     LoginResponse loginResponse = response.body();
-
+                    
                     if (loginResponse.isSuccess()) {
                         // Guardar sesión
                         LoginResponse.UserData user = loginResponse.getUser();
@@ -86,9 +86,9 @@ public class LoginActivity extends AppCompatActivity {
                             user.getEmail(),
                             user.getProfileType()
                         );
-
+                        
                         Toast.makeText(LoginActivity.this, "¡Bienvenido!", Toast.LENGTH_SHORT).show();
-
+                        
                         // Navegar a la pantalla principal
                         // TODO: Crear pantalla principal después del login
                         finish();
