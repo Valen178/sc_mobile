@@ -1,5 +1,6 @@
 package com.example.sportconnection;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -9,14 +10,13 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.sportconnection.model.ProfileRequest;
 import com.example.sportconnection.model.ProfileResponse;
 import com.example.sportconnection.repository.AuthRepository;
+import com.example.sportconnection.utils.LoadingDialog;
 import com.example.sportconnection.utils.SessionManager;
+import com.example.sportconnection.utils.ThreadManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -28,7 +28,7 @@ public class ProfileFormActivity extends AppCompatActivity {
     private EditText editTextName, editTextLastName, editTextBirthdate;
     private EditText editTextHeight, editTextWeight, editTextLocation;
     private EditText editTextSport, editTextPhone, editTextInstagram;
-    private EditText editTextTwitter, editTextDescription, editTextAgency;
+    private EditText editTextTwitter, editTextDescription;
     private Button buttonComplete;
 
     private String email, password, profileType, token;
@@ -36,6 +36,8 @@ public class ProfileFormActivity extends AppCompatActivity {
 
     private AuthRepository authRepository;
     private SessionManager sessionManager;
+    private LoadingDialog loadingDialog;
+    private ThreadManager threadManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +67,11 @@ public class ProfileFormActivity extends AppCompatActivity {
         editTextDescription = findViewById(R.id.editTextDescription);
         buttonComplete = findViewById(R.id.buttonComplete);
 
-        // Inicializar repositorio y session manager
+        // Inicializar repositorio, session manager y utilidades
         authRepository = new AuthRepository();
         sessionManager = new SessionManager(this);
+        loadingDialog = new LoadingDialog(this);
+        threadManager = ThreadManager.getInstance();
 
         // Configurar el formulario según el tipo de perfil
         setupFormByProfileType();
@@ -87,7 +91,6 @@ public class ProfileFormActivity extends AppCompatActivity {
         switch (profileType) {
             case "athlete":
                 titleProfileForm.setText("Perfil de Atleta");
-                // Todos los campos son visibles para atleta
                 editTextName.setHint("Nombre");
                 editTextLastName.setVisibility(View.VISIBLE);
                 editTextBirthdate.setVisibility(View.VISIBLE);
@@ -156,92 +159,159 @@ public class ProfileFormActivity extends AppCompatActivity {
     }
 
     private void completeRegistration() {
+        // Mostrar diálogo de carga
+        loadingDialog.show("Creando perfil...");
         buttonComplete.setEnabled(false);
 
-        // Crear el objeto ProfileRequest
-        ProfileRequest profileRequest = new ProfileRequest();
-        profileRequest.setUserId(userId);
-        profileRequest.setProfileType(profileType);
-        profileRequest.setName(editTextName.getText().toString().trim());
-        profileRequest.setDescription(editTextDescription.getText().toString().trim());
-        profileRequest.setPhoneNumber(editTextPhone.getText().toString().trim());
-        profileRequest.setIgUser(editTextInstagram.getText().toString().trim());
-        profileRequest.setxUser(editTextTwitter.getText().toString().trim());
-
-        // Convertir location_id y sport_id a Integer
-        try {
-            String locationStr = editTextLocation.getText().toString().trim();
-            if (!locationStr.isEmpty()) {
-                profileRequest.setLocationId(Integer.parseInt(locationStr));
-            }
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "ID de ubicación inválido", Toast.LENGTH_SHORT).show();
-            buttonComplete.setEnabled(true);
-            return;
-        }
-
-        try {
-            String sportStr = editTextSport.getText().toString().trim();
-            if (!sportStr.isEmpty()) {
-                profileRequest.setSportId(Integer.parseInt(sportStr));
-            }
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, "ID de deporte inválido", Toast.LENGTH_SHORT).show();
-            buttonComplete.setEnabled(true);
-            return;
-        }
-
-        // Campos específicos según el tipo de perfil
-        if (profileType.equals("athlete")) {
-            profileRequest.setLastName(editTextLastName.getText().toString().trim());
-            profileRequest.setBirthdate(editTextBirthdate.getText().toString().trim());
-            profileRequest.setHeight(editTextHeight.getText().toString().trim());
-            profileRequest.setWeight(editTextWeight.getText().toString().trim());
-        } else if (profileType.equals("agent")) {
-            profileRequest.setLastName(editTextLastName.getText().toString().trim());
-            // Para agente, la descripción puede incluir el nombre de la agencia
-            // o puedes agregar un campo adicional
-        } else if (profileType.equals("team")) {
-            // Para TEAM, el campo lastName se usa como "job" (puesto/rol)
-            profileRequest.setJob(editTextLastName.getText().toString().trim());
-        }
-
-        // Enviar al backend
-        authRepository.createProfile(token, profileRequest, new Callback<ProfileResponse>() {
+        // Crear el objeto ProfileRequest en segundo plano
+        threadManager.executeInBackground(new Runnable() {
             @Override
-            public void onResponse(Call<ProfileResponse> call, Response<ProfileResponse> response) {
-                buttonComplete.setEnabled(true);
+            public void run() {
+                final ProfileRequest profileRequest = new ProfileRequest();
+                profileRequest.setUserId(userId);
+                profileRequest.setProfileType(profileType);
+                profileRequest.setName(editTextName.getText().toString().trim());
+                profileRequest.setDescription(editTextDescription.getText().toString().trim());
+                profileRequest.setPhoneNumber(editTextPhone.getText().toString().trim());
+                profileRequest.setIgUser(editTextInstagram.getText().toString().trim());
+                profileRequest.setxUser(editTextTwitter.getText().toString().trim());
 
-                if (response.isSuccessful() && response.body() != null) {
-                    ProfileResponse profileResponse = response.body();
-
-                    if (profileResponse.isSuccess()) {
-                        // Guardar la sesión completa con el perfil
-                        sessionManager.saveSession(token, userId, email, profileType);
-
-                        Toast.makeText(ProfileFormActivity.this,
-                            "¡Perfil creado exitosamente!", Toast.LENGTH_LONG).show();
-
-                        // Navegar a la pantalla principal
-                        // TODO: Crear pantalla principal de la app
-                        finish();
-                    } else {
-                        Toast.makeText(ProfileFormActivity.this,
-                            profileResponse.getMessage(), Toast.LENGTH_LONG).show();
+                // Convertir location_id y sport_id a Integer
+                try {
+                    String locationStr = editTextLocation.getText().toString().trim();
+                    if (!locationStr.isEmpty()) {
+                        profileRequest.setLocationId(Integer.parseInt(locationStr));
                     }
-                } else {
-                    Toast.makeText(ProfileFormActivity.this,
-                        "Error al crear perfil: " + response.message(), Toast.LENGTH_LONG).show();
+                } catch (NumberFormatException e) {
+                    threadManager.executeOnMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadingDialog.dismiss();
+                            Toast.makeText(ProfileFormActivity.this, "ID de ubicación inválido", Toast.LENGTH_SHORT).show();
+                            buttonComplete.setEnabled(true);
+                        }
+                    });
+                    return;
                 }
-            }
 
-            @Override
-            public void onFailure(Call<ProfileResponse> call, Throwable t) {
-                buttonComplete.setEnabled(true);
-                Toast.makeText(ProfileFormActivity.this,
-                    "Error de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                try {
+                    String sportStr = editTextSport.getText().toString().trim();
+                    if (!sportStr.isEmpty()) {
+                        profileRequest.setSportId(Integer.parseInt(sportStr));
+                    }
+                } catch (NumberFormatException e) {
+                    threadManager.executeOnMainThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadingDialog.dismiss();
+                            Toast.makeText(ProfileFormActivity.this, "ID de deporte inválido", Toast.LENGTH_SHORT).show();
+                            buttonComplete.setEnabled(true);
+                        }
+                    });
+                    return;
+                }
+
+                // Campos específicos según el tipo de perfil
+                if (profileType.equals("athlete")) {
+                    profileRequest.setLastName(editTextLastName.getText().toString().trim());
+                    profileRequest.setBirthdate(editTextBirthdate.getText().toString().trim());
+                    profileRequest.setHeight(editTextHeight.getText().toString().trim());
+                    profileRequest.setWeight(editTextWeight.getText().toString().trim());
+                } else if (profileType.equals("agent")) {
+                    profileRequest.setLastName(editTextLastName.getText().toString().trim());
+                } else if (profileType.equals("team")) {
+                    profileRequest.setJob(editTextLastName.getText().toString().trim());
+                }
+
+                // Enviar al backend
+                authRepository.createProfile(token, profileRequest, new Callback<ProfileResponse>() {
+                    @Override
+                    public void onResponse(Call<ProfileResponse> call, Response<ProfileResponse> response) {
+                        threadManager.executeOnMainThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadingDialog.dismiss();
+                                buttonComplete.setEnabled(true);
+
+                                if (response.isSuccessful() && response.body() != null) {
+                                    ProfileResponse profileResponse = response.body();
+
+                                    if (profileResponse.isSuccess()) {
+                                        // Guardar la sesión en segundo plano
+                                        threadManager.executeInBackground(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                sessionManager.saveSession(token, userId, email, profileType);
+
+                                                // Navegar en el hilo principal
+                                                threadManager.executeOnMainThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        Toast.makeText(ProfileFormActivity.this,
+                                                            "¡Perfil creado exitosamente!", Toast.LENGTH_SHORT).show();
+
+                                                        // Pequeño delay para mostrar el mensaje
+                                                        threadManager.executeWithDelay(new Runnable() {
+                                                            @Override
+                                                            public void run() {
+                                                                Intent intent = new Intent(ProfileFormActivity.this, HomeActivity.class);
+                                                                startActivity(intent);
+                                                                finish();
+                                                            }
+                                                        }, 500);
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    } else {
+                                        String errorMsg = profileResponse.getMessage();
+                                        if (errorMsg == null || errorMsg.isEmpty()) {
+                                            errorMsg = "Error al crear el perfil";
+                                        }
+                                        Toast.makeText(ProfileFormActivity.this,
+                                            errorMsg, Toast.LENGTH_LONG).show();
+                                    }
+                                } else {
+                                    String errorMsg = response.message();
+                                    if (errorMsg == null || errorMsg.isEmpty()) {
+                                        errorMsg = "Error desconocido en el servidor";
+                                    }
+                                    Toast.makeText(ProfileFormActivity.this,
+                                        "Error al crear perfil: " + errorMsg, Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(Call<ProfileResponse> call, Throwable t) {
+                        threadManager.executeOnMainThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadingDialog.dismiss();
+                                buttonComplete.setEnabled(true);
+
+                                String errorMsg = t.getMessage();
+                                if (errorMsg == null || errorMsg.isEmpty()) {
+                                    errorMsg = "Error desconocido";
+                                }
+                                Toast.makeText(ProfileFormActivity.this,
+                                    "Error de conexión: " + errorMsg, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                });
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Cerrar el diálogo si está abierto
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
     }
 }
 

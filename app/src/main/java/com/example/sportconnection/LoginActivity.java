@@ -15,7 +15,10 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.sportconnection.model.LoginResponse;
 import com.example.sportconnection.repository.AuthRepository;
+import com.example.sportconnection.utils.LoadingDialog;
+import com.example.sportconnection.utils.Logger;
 import com.example.sportconnection.utils.SessionManager;
+import com.example.sportconnection.utils.ThreadManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -23,16 +26,23 @@ import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final String TAG = "LoginActivity";
     private EditText editTextEmail;
     private EditText editTextPassword;
     private Button buttonLogin;
-    
+
     private AuthRepository authRepository;
     private SessionManager sessionManager;
+    private LoadingDialog loadingDialog;
+    private ThreadManager threadManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Logger.forceLog(TAG, "========== INICIANDO LOGINACTIVITY ==========");
+        Logger.d(TAG, "onCreate() llamado");
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.titleLogin), (v, insets) -> {
@@ -45,10 +55,12 @@ public class LoginActivity extends AppCompatActivity {
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
         buttonLogin = findViewById(R.id.buttonLogin);
-        
-        // Inicializar repositorio y session manager
+
+        // Inicializar repositorio, session manager y utilidades
         authRepository = new AuthRepository();
         sessionManager = new SessionManager(this);
+        loadingDialog = new LoadingDialog(this);
+        threadManager = ThreadManager.getInstance();
 
         // Configurar el botón de login
         buttonLogin.setOnClickListener(new View.OnClickListener() {
@@ -65,47 +77,131 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
-    
-    private void loginUser(String email, String password) {
-        buttonLogin.setEnabled(false);
-        
-        authRepository.login(email, password, new Callback<LoginResponse>() {
-            @Override
-            public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
-                buttonLogin.setEnabled(true);
-                
-                if (response.isSuccessful() && response.body() != null) {
-                    LoginResponse loginResponse = response.body();
-                    
-                    if (loginResponse.isSuccess()) {
-                        // Guardar sesión
-                        LoginResponse.UserData user = loginResponse.getUser();
-                        sessionManager.saveSession(
-                            loginResponse.getToken(),
-                            user.getId(),
-                            user.getEmail(),
-                            user.getProfileType()
-                        );
-                        
-                        Toast.makeText(LoginActivity.this, "¡Bienvenido!", Toast.LENGTH_SHORT).show();
-                        
-                        // Navegar a la pantalla principal
-                        // TODO: Crear pantalla principal después del login
-                        finish();
-                    } else {
-                        Toast.makeText(LoginActivity.this, loginResponse.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Toast.makeText(LoginActivity.this, "Error en el login: " + response.message(), Toast.LENGTH_LONG).show();
-                }
-            }
 
+    private void loginUser(final String email, final String password) {
+        // Mostrar diálogo de carga
+        loadingDialog.show("Iniciando sesión...");
+        buttonLogin.setEnabled(false);
+
+        // Ejecutar login en segundo plano
+        threadManager.executeInBackground(new Runnable() {
             @Override
-            public void onFailure(Call<LoginResponse> call, Throwable t) {
-                buttonLogin.setEnabled(true);
-                Toast.makeText(LoginActivity.this, "Error de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            public void run() {
+                authRepository.login(email, password, new Callback<LoginResponse>() {
+                    @Override
+                    public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                        // Ejecutar en el hilo principal para actualizar la UI
+                        threadManager.executeOnMainThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadingDialog.dismiss();
+                                buttonLogin.setEnabled(true);
+
+                                if (response.isSuccessful() && response.body() != null) {
+                                    LoginResponse loginResponse = response.body();
+
+                                    Logger.forceLog(TAG, "Response recibida del servidor");
+                                    Logger.forceLog(TAG, "Token presente: " + (loginResponse.getToken() != null));
+                                    Logger.forceLog(TAG, "User presente: " + (loginResponse.getUser() != null));
+
+                                    if (loginResponse.isSuccess()) {
+                                        // Log para debug
+                                        Logger.forceLog(TAG, "Login exitoso!");
+
+                                        LoginResponse.UserData user = loginResponse.getUser();
+
+                                        if (user == null) {
+                                            Logger.forceLog(TAG, "ERROR: User data es NULL");
+                                            Toast.makeText(LoginActivity.this, "Error: Datos de usuario no recibidos", Toast.LENGTH_LONG).show();
+                                            return;
+                                        }
+
+                                        String token = loginResponse.getToken();
+                                        if (token == null || token.isEmpty()) {
+                                            Logger.forceLog(TAG, "ERROR: Token es NULL o vacío");
+                                            Toast.makeText(LoginActivity.this, "Error: Token no recibido", Toast.LENGTH_LONG).show();
+                                            return;
+                                        }
+
+                                        // Log de datos del usuario
+                                        Logger.forceLog(TAG, "Token: " + token);
+                                        Logger.forceLog(TAG, "UserId: " + user.getId());
+                                        Logger.forceLog(TAG, "Email: " + user.getEmail());
+                                        Logger.forceLog(TAG, "ProfileType/Role: " + user.getProfileType());
+
+                                        // Guardar sesión SINCRÓNICAMENTE (no en segundo plano)
+                                        sessionManager.saveSession(
+                                            token,
+                                            user.getId(),
+                                            user.getEmail(),
+                                            user.getProfileType() != null ? user.getProfileType() : "user"
+                                        );
+
+                                        // Verificar que se guardó correctamente
+                                        boolean isLoggedIn = sessionManager.isLoggedIn();
+                                        Logger.forceLog(TAG, "Sesión guardada. isLoggedIn: " + isLoggedIn);
+
+                                        Toast.makeText(LoginActivity.this, "¡Bienvenido!", Toast.LENGTH_SHORT).show();
+
+                                        // Navegar a HomeActivity con un pequeño delay
+                                        threadManager.executeWithDelay(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Logger.forceLog(TAG, "Navegando a HomeActivity...");
+                                                Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+                                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                startActivity(intent);
+                                                finish();
+                                            }
+                                        }, 300);
+                                    } else {
+                                        // Manejar mensaje null
+                                        String errorMsg = loginResponse.getMessage();
+                                        if (errorMsg == null || errorMsg.isEmpty()) {
+                                            errorMsg = "Error en el inicio de sesión";
+                                        }
+                                        Toast.makeText(LoginActivity.this, errorMsg, Toast.LENGTH_LONG).show();
+                                    }
+                                } else {
+                                    String errorMsg = response.message();
+                                    if (errorMsg == null || errorMsg.isEmpty()) {
+                                        errorMsg = "Error en el servidor";
+                                    }
+                                    Toast.makeText(LoginActivity.this, "Error en el login: " + errorMsg, Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(Call<LoginResponse> call, Throwable t) {
+                        // Ejecutar en el hilo principal para actualizar la UI
+                        threadManager.executeOnMainThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadingDialog.dismiss();
+                                buttonLogin.setEnabled(true);
+
+                                String errorMsg = t.getMessage();
+                                if (errorMsg == null || errorMsg.isEmpty()) {
+                                    errorMsg = "Error desconocido";
+                                }
+                                Toast.makeText(LoginActivity.this, "Error de conexión: " + errorMsg, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                });
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Cerrar el diálogo si está abierto
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
     }
 }
 

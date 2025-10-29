@@ -1,25 +1,20 @@
 package com.example.sportconnection.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class LoginResponse {
-    private boolean success;
-    private String message;
     private String token;
     private UserData user;
 
+    // Para mantener compatibilidad con código existente
     public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
+        // Si tenemos token y user, el login fue exitoso
+        return token != null && !token.isEmpty() && user != null;
     }
 
     public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+        // Mensaje por defecto
+        return isSuccess() ? "Login exitoso" : "Error en el login";
     }
 
     public String getToken() {
@@ -41,6 +36,9 @@ public class LoginResponse {
     public static class UserData {
         private int id;
         private String email;
+
+        // El backend envía "role" pero lo mapeamos a "profileType"
+        @SerializedName("role")
         private String profileType;
 
         public int getId() {
@@ -65,6 +63,11 @@ public class LoginResponse {
 
         public void setProfileType(String profileType) {
             this.profileType = profileType;
+        }
+
+        // Método adicional por si necesitamos acceder como "role"
+        public String getRole() {
+            return profileType;
         }
     }
 }
