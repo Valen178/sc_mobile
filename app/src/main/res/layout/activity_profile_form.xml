@@ -78,27 +78,45 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/editTextHeight" />
 
-        <EditText
-            android:id="@+id/editTextLocation"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/labelLocation"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Ubicación"
-            android:inputType="text"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="Ubicación"
+            android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/editTextWeight" />
 
-        <EditText
-            android:id="@+id/editTextSport"
+        <Spinner
+            android:id="@+id/spinnerLocation"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="Deporte"
-            android:inputType="text"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:minHeight="48dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editTextLocation" />
+            app:layout_constraintTop_toBottomOf="@+id/labelLocation" />
+
+        <TextView
+            android:id="@+id/labelSport"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Deporte"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/spinnerLocation" />
+
+        <Spinner
+            android:id="@+id/spinnerSport"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:minHeight="48dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/labelSport" />
 
         <EditText
             android:id="@+id/editTextPhone"
@@ -109,7 +127,7 @@
             android:inputType="phone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editTextSport" />
+            app:layout_constraintTop_toBottomOf="@+id/spinnerSport" />
 
         <EditText
             android:id="@+id/editTextInstagram"
@@ -145,6 +163,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/editTextTwitter" />
 
+        <EditText
+            android:id="@+id/editTextAgency"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Agencia"
+            android:inputType="text"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/editTextDescription" />
+
         <Button
             android:id="@+id/buttonComplete"
             android:layout_width="0dp"
@@ -155,7 +185,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editTextDescription" />
+            app:layout_constraintTop_toBottomOf="@+id/editTextAgency" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

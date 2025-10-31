@@ -6,6 +6,10 @@ import com.example.sportconnection.model.SignupRequest;
 import com.example.sportconnection.model.SignupResponse;
 import com.example.sportconnection.model.ProfileRequest;
 import com.example.sportconnection.model.ProfileResponse;
+import com.example.sportconnection.model.Sport;
+import com.example.sportconnection.model.Location;
+
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -43,5 +47,12 @@ public interface ApiService {
             @Path("id") int profileId,
             @Body ProfileRequest request
     );
+
+    // Endpoints de lookup (deportes y ubicaciones)
+    @GET("lookup/sports")
+    Call<List<Sport>> getSports();
+
+    @GET("lookup/locations")
+    Call<List<Location>> getLocations();
 }
 

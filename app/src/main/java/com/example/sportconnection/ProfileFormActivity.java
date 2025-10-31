@@ -2,21 +2,31 @@ package com.example.sportconnection;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.sportconnection.model.Location;
 import com.example.sportconnection.model.ProfileRequest;
 import com.example.sportconnection.model.ProfileResponse;
+import com.example.sportconnection.model.Sport;
 import com.example.sportconnection.repository.AuthRepository;
+import com.example.sportconnection.repository.LookupRepository;
 import com.example.sportconnection.utils.LoadingDialog;
 import com.example.sportconnection.utils.SessionManager;
 import com.example.sportconnection.utils.ThreadManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -24,20 +34,29 @@ import retrofit2.Response;
 
 public class ProfileFormActivity extends AppCompatActivity {
 
+    private static final String TAG = "ProfileFormActivity";
+
     private TextView titleProfileForm;
     private EditText editTextName, editTextLastName, editTextBirthdate;
-    private EditText editTextHeight, editTextWeight, editTextLocation;
-    private EditText editTextSport, editTextPhone, editTextInstagram;
-    private EditText editTextTwitter, editTextDescription;
+    private EditText editTextHeight, editTextWeight;
+    private Spinner spinnerLocation, spinnerSport;
+    private EditText editTextPhone, editTextInstagram;
+    private EditText editTextTwitter, editTextDescription, editTextAgency;
     private Button buttonComplete;
 
     private String email, password, profileType, token;
     private int userId;
 
     private AuthRepository authRepository;
+    private LookupRepository lookupRepository;
     private SessionManager sessionManager;
     private LoadingDialog loadingDialog;
     private ThreadManager threadManager;
+
+    private List<Sport> sportList = new ArrayList<>();
+    private List<Location> locationList = new ArrayList<>();
+    private int selectedSportId = -1;
+    private int selectedLocationId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +71,8 @@ public class ProfileFormActivity extends AppCompatActivity {
         token = getIntent().getStringExtra("token");
         userId = getIntent().getIntExtra("userId", -1);
 
+        Log.d(TAG, "onCreate: profileType=" + profileType + ", userId=" + userId);
+
         // Inicializar vistas
         titleProfileForm = findViewById(R.id.titleProfileForm);
         editTextName = findViewById(R.id.editTextName);
@@ -59,22 +80,27 @@ public class ProfileFormActivity extends AppCompatActivity {
         editTextBirthdate = findViewById(R.id.editTextBirthdate);
         editTextHeight = findViewById(R.id.editTextHeight);
         editTextWeight = findViewById(R.id.editTextWeight);
-        editTextLocation = findViewById(R.id.editTextLocation);
-        editTextSport = findViewById(R.id.editTextSport);
+        spinnerLocation = findViewById(R.id.spinnerLocation);
+        spinnerSport = findViewById(R.id.spinnerSport);
         editTextPhone = findViewById(R.id.editTextPhone);
         editTextInstagram = findViewById(R.id.editTextInstagram);
         editTextTwitter = findViewById(R.id.editTextTwitter);
         editTextDescription = findViewById(R.id.editTextDescription);
+        editTextAgency = findViewById(R.id.editTextAgency);
         buttonComplete = findViewById(R.id.buttonComplete);
 
-        // Inicializar repositorio, session manager y utilidades
+        // Inicializar repositorios y utilidades
         authRepository = new AuthRepository();
+        lookupRepository = new LookupRepository();
         sessionManager = new SessionManager(this);
         loadingDialog = new LoadingDialog(this);
         threadManager = ThreadManager.getInstance();
 
         // Configurar el formulario según el tipo de perfil
         setupFormByProfileType();
+
+        // Cargar datos de sports y locations
+        loadSportsAndLocations();
 
         // Configurar el botón de completar
         buttonComplete.setOnClickListener(new View.OnClickListener() {
@@ -88,24 +114,30 @@ public class ProfileFormActivity extends AppCompatActivity {
     }
 
     private void setupFormByProfileType() {
-        switch (profileType) {
+        Log.d(TAG, "setupFormByProfileType: " + profileType);
+
+        switch (profileType.toLowerCase()) {
             case "athlete":
                 titleProfileForm.setText("Perfil de Atleta");
                 editTextName.setHint("Nombre");
                 editTextLastName.setVisibility(View.VISIBLE);
+                editTextLastName.setHint("Apellido");
                 editTextBirthdate.setVisibility(View.VISIBLE);
                 editTextHeight.setVisibility(View.VISIBLE);
                 editTextWeight.setVisibility(View.VISIBLE);
+                editTextAgency.setVisibility(View.GONE);
                 break;
 
             case "agent":
                 titleProfileForm.setText("Perfil de Agente");
                 editTextName.setHint("Nombre");
                 editTextLastName.setVisibility(View.VISIBLE);
+                editTextLastName.setHint("Apellido");
                 editTextBirthdate.setVisibility(View.GONE);
                 editTextHeight.setVisibility(View.GONE);
                 editTextWeight.setVisibility(View.GONE);
                 editTextDescription.setHint("Descripción");
+                editTextAgency.setVisibility(View.VISIBLE);
                 break;
 
             case "team":
@@ -116,14 +148,154 @@ public class ProfileFormActivity extends AppCompatActivity {
                 editTextBirthdate.setVisibility(View.GONE);
                 editTextHeight.setVisibility(View.GONE);
                 editTextWeight.setVisibility(View.GONE);
+                editTextAgency.setVisibility(View.GONE);
                 break;
+        }
+    }
+
+    private void loadSportsAndLocations() {
+        Log.d(TAG, "loadSportsAndLocations: Iniciando carga de datos");
+        loadingDialog.show("Cargando datos...");
+
+        // Cargar deportes
+        lookupRepository.getSports(new Callback<List<Sport>>() {
+            @Override
+            public void onResponse(Call<List<Sport>> call, Response<List<Sport>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    sportList = response.body();
+                    Log.d(TAG, "Sports cargados: " + sportList.size());
+                    setupSportSpinner();
+                    checkIfDataLoaded();
+                } else {
+                    Log.e(TAG, "Error al cargar sports: " + response.code());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadingDialog.dismiss();
+                            Toast.makeText(ProfileFormActivity.this,
+                                "Error al cargar deportes", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Sport>> call, Throwable t) {
+                Log.e(TAG, "Failure al cargar sports: " + t.getMessage());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadingDialog.dismiss();
+                        Toast.makeText(ProfileFormActivity.this,
+                            "Error de conexión al cargar deportes", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+        // Cargar ubicaciones
+        lookupRepository.getLocations(new Callback<List<Location>>() {
+            @Override
+            public void onResponse(Call<List<Location>> call, Response<List<Location>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    locationList = response.body();
+                    Log.d(TAG, "Locations cargadas: " + locationList.size());
+                    setupLocationSpinner();
+                    checkIfDataLoaded();
+                } else {
+                    Log.e(TAG, "Error al cargar locations: " + response.code());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadingDialog.dismiss();
+                            Toast.makeText(ProfileFormActivity.this,
+                                "Error al cargar ubicaciones", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Location>> call, Throwable t) {
+                Log.e(TAG, "Failure al cargar locations: " + t.getMessage());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadingDialog.dismiss();
+                        Toast.makeText(ProfileFormActivity.this,
+                            "Error de conexión al cargar ubicaciones", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+    }
+
+    private void setupSportSpinner() {
+        ArrayAdapter<Sport> adapter = new ArrayAdapter<>(this,
+            android.R.layout.simple_spinner_item, sportList);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                spinnerSport.setAdapter(adapter);
+                spinnerSport.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        selectedSportId = sportList.get(position).getId();
+                        Log.d(TAG, "Sport seleccionado: " + sportList.get(position).getName() +
+                            " (ID: " + selectedSportId + ")");
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                        selectedSportId = -1;
+                    }
+                });
+            }
+        });
+    }
+
+    private void setupLocationSpinner() {
+        ArrayAdapter<Location> adapter = new ArrayAdapter<>(this,
+            android.R.layout.simple_spinner_item, locationList);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                spinnerLocation.setAdapter(adapter);
+                spinnerLocation.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        selectedLocationId = locationList.get(position).getId();
+                        Log.d(TAG, "Location seleccionada: " + locationList.get(position).toString() +
+                            " (ID: " + selectedLocationId + ")");
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                        selectedLocationId = -1;
+                    }
+                });
+            }
+        });
+    }
+
+    private void checkIfDataLoaded() {
+        if (!sportList.isEmpty() && !locationList.isEmpty()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    loadingDialog.dismiss();
+                    Log.d(TAG, "Datos cargados completamente");
+                }
+            });
         }
     }
 
     private boolean validateForm() {
         String name = editTextName.getText().toString().trim();
-        String location = editTextLocation.getText().toString().trim();
-        String sport = editTextSport.getText().toString().trim();
         String phone = editTextPhone.getText().toString().trim();
 
         if (name.isEmpty()) {
@@ -131,7 +303,7 @@ public class ProfileFormActivity extends AppCompatActivity {
             return false;
         }
 
-        if (profileType.equals("athlete") || profileType.equals("agent")) {
+        if (profileType.equalsIgnoreCase("athlete") || profileType.equalsIgnoreCase("agent")) {
             String lastName = editTextLastName.getText().toString().trim();
             if (lastName.isEmpty()) {
                 Toast.makeText(this, "Por favor, ingresa el apellido", Toast.LENGTH_SHORT).show();
@@ -139,7 +311,7 @@ public class ProfileFormActivity extends AppCompatActivity {
             }
         }
 
-        if (profileType.equals("athlete")) {
+        if (profileType.equalsIgnoreCase("athlete")) {
             String birthdate = editTextBirthdate.getText().toString().trim();
             String height = editTextHeight.getText().toString().trim();
             String weight = editTextWeight.getText().toString().trim();
@@ -150,8 +322,29 @@ public class ProfileFormActivity extends AppCompatActivity {
             }
         }
 
-        if (location.isEmpty() || sport.isEmpty() || phone.isEmpty()) {
-            Toast.makeText(this, "Por favor, completa ubicación, deporte y teléfono", Toast.LENGTH_SHORT).show();
+        if (profileType.equalsIgnoreCase("agent")) {
+            String agency = editTextAgency.getText().toString().trim();
+            if (agency.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingresa el nombre de la agencia", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+
+        if (profileType.equalsIgnoreCase("team")) {
+            String job = editTextLastName.getText().toString().trim();
+            if (job.isEmpty()) {
+                Toast.makeText(this, "Por favor, ingresa el puesto/rol", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+
+        if (selectedLocationId == -1 || selectedSportId == -1) {
+            Toast.makeText(this, "Por favor, selecciona ubicación y deporte", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (phone.isEmpty()) {
+            Toast.makeText(this, "Por favor, ingresa el número de teléfono", Toast.LENGTH_SHORT).show();
             return false;
         }
 
@@ -159,6 +352,8 @@ public class ProfileFormActivity extends AppCompatActivity {
     }
 
     private void completeRegistration() {
+        Log.d(TAG, "completeRegistration: Iniciando");
+
         // Mostrar diálogo de carga
         loadingDialog.show("Creando perfil...");
         buttonComplete.setEnabled(false);
@@ -168,58 +363,28 @@ public class ProfileFormActivity extends AppCompatActivity {
             @Override
             public void run() {
                 final ProfileRequest profileRequest = new ProfileRequest();
-                profileRequest.setUserId(userId);
-                profileRequest.setProfileType(profileType);
+                profileRequest.setProfileType(profileType.toLowerCase());
                 profileRequest.setName(editTextName.getText().toString().trim());
                 profileRequest.setDescription(editTextDescription.getText().toString().trim());
                 profileRequest.setPhoneNumber(editTextPhone.getText().toString().trim());
                 profileRequest.setIgUser(editTextInstagram.getText().toString().trim());
                 profileRequest.setxUser(editTextTwitter.getText().toString().trim());
+                profileRequest.setLocationId(selectedLocationId);
+                profileRequest.setSportId(selectedSportId);
 
-                // Convertir location_id y sport_id a Integer
-                try {
-                    String locationStr = editTextLocation.getText().toString().trim();
-                    if (!locationStr.isEmpty()) {
-                        profileRequest.setLocationId(Integer.parseInt(locationStr));
-                    }
-                } catch (NumberFormatException e) {
-                    threadManager.executeOnMainThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            loadingDialog.dismiss();
-                            Toast.makeText(ProfileFormActivity.this, "ID de ubicación inválido", Toast.LENGTH_SHORT).show();
-                            buttonComplete.setEnabled(true);
-                        }
-                    });
-                    return;
-                }
-
-                try {
-                    String sportStr = editTextSport.getText().toString().trim();
-                    if (!sportStr.isEmpty()) {
-                        profileRequest.setSportId(Integer.parseInt(sportStr));
-                    }
-                } catch (NumberFormatException e) {
-                    threadManager.executeOnMainThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            loadingDialog.dismiss();
-                            Toast.makeText(ProfileFormActivity.this, "ID de deporte inválido", Toast.LENGTH_SHORT).show();
-                            buttonComplete.setEnabled(true);
-                        }
-                    });
-                    return;
-                }
+                Log.d(TAG, "ProfileRequest: profileType=" + profileType.toLowerCase() +
+                    ", locationId=" + selectedLocationId + ", sportId=" + selectedSportId);
 
                 // Campos específicos según el tipo de perfil
-                if (profileType.equals("athlete")) {
+                if (profileType.equalsIgnoreCase("athlete")) {
                     profileRequest.setLastName(editTextLastName.getText().toString().trim());
                     profileRequest.setBirthdate(editTextBirthdate.getText().toString().trim());
                     profileRequest.setHeight(editTextHeight.getText().toString().trim());
                     profileRequest.setWeight(editTextWeight.getText().toString().trim());
-                } else if (profileType.equals("agent")) {
+                } else if (profileType.equalsIgnoreCase("agent")) {
                     profileRequest.setLastName(editTextLastName.getText().toString().trim());
-                } else if (profileType.equals("team")) {
+                    profileRequest.setAgency(editTextAgency.getText().toString().trim());
+                } else if (profileType.equalsIgnoreCase("team")) {
                     profileRequest.setJob(editTextLastName.getText().toString().trim());
                 }
 
