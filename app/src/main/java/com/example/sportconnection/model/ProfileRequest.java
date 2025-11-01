@@ -6,7 +6,7 @@ public class ProfileRequest {
     @SerializedName("user_id")
     private Integer userId;
 
-    @SerializedName("profile_type")
+    @SerializedName("profileType")
     private String profileType;
     // Campos comunes
     private String name;

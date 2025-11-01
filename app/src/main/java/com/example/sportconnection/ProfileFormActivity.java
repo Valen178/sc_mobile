@@ -1,5 +1,6 @@
 package com.example.sportconnection;
 
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,6 +8,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -14,6 +16,10 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 
 import com.example.sportconnection.model.Location;
 import com.example.sportconnection.model.ProfileRequest;
@@ -58,6 +64,9 @@ public class ProfileFormActivity extends AppCompatActivity {
     private int selectedSportId = -1;
     private int selectedLocationId = -1;
 
+    private String selectedBirthdate = ""; // Formato ISO: YYYY-MM-DD
+    private Calendar birthdateCalendar = Calendar.getInstance();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,6 +110,9 @@ public class ProfileFormActivity extends AppCompatActivity {
 
         // Cargar datos de sports y locations
         loadSportsAndLocations();
+
+        // Configurar el selector de fecha de nacimiento
+        setupBirthdatePicker();
 
         // Configurar el botón de completar
         buttonComplete.setOnClickListener(new View.OnClickListener() {
@@ -151,6 +163,58 @@ public class ProfileFormActivity extends AppCompatActivity {
                 editTextAgency.setVisibility(View.GONE);
                 break;
         }
+    }
+
+    private void setupBirthdatePicker() {
+        // Configurar fecha máxima (hoy)
+        final Calendar maxDate = Calendar.getInstance();
+
+        // Configurar fecha mínima (40 años atrás)
+        final Calendar minDate = Calendar.getInstance();
+        minDate.add(Calendar.YEAR, -40);
+
+        // Configurar fecha inicial (18 años atrás, edad mínima típica)
+        birthdateCalendar.add(Calendar.YEAR, -18);
+
+        editTextBirthdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int year = birthdateCalendar.get(Calendar.YEAR);
+                int month = birthdateCalendar.get(Calendar.MONTH);
+                int day = birthdateCalendar.get(Calendar.DAY_OF_MONTH);
+
+                DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    ProfileFormActivity.this,
+                    new DatePickerDialog.OnDateSetListener() {
+                        @Override
+                        public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                            // Actualizar el calendario con la fecha seleccionada
+                            birthdateCalendar.set(Calendar.YEAR, year);
+                            birthdateCalendar.set(Calendar.MONTH, month);
+                            birthdateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                            // Formato para mostrar al usuario (DD/MM/YYYY)
+                            SimpleDateFormat displayFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+                            String displayDate = displayFormat.format(birthdateCalendar.getTime());
+                            editTextBirthdate.setText(displayDate);
+
+                            // Formato ISO para enviar al backend (YYYY-MM-DD)
+                            SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                            selectedBirthdate = isoFormat.format(birthdateCalendar.getTime());
+
+                            Log.d(TAG, "Fecha seleccionada - Display: " + displayDate + ", ISO: " + selectedBirthdate);
+                        }
+                    },
+                    year, month, day
+                );
+
+                // Configurar fechas límite
+                datePickerDialog.getDatePicker().setMaxDate(maxDate.getTimeInMillis());
+                datePickerDialog.getDatePicker().setMinDate(minDate.getTimeInMillis());
+
+                datePickerDialog.show();
+            }
+        });
     }
 
     private void loadSportsAndLocations() {
@@ -312,11 +376,15 @@ public class ProfileFormActivity extends AppCompatActivity {
         }
 
         if (profileType.equalsIgnoreCase("athlete")) {
-            String birthdate = editTextBirthdate.getText().toString().trim();
             String height = editTextHeight.getText().toString().trim();
             String weight = editTextWeight.getText().toString().trim();
 
-            if (birthdate.isEmpty() || height.isEmpty() || weight.isEmpty()) {
+            if (selectedBirthdate.isEmpty()) {
+                Toast.makeText(this, "Por favor, selecciona tu fecha de nacimiento", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+            if (height.isEmpty() || weight.isEmpty()) {
                 Toast.makeText(this, "Por favor, completa todos los campos obligatorios", Toast.LENGTH_SHORT).show();
                 return false;
             }
@@ -324,10 +392,6 @@ public class ProfileFormActivity extends AppCompatActivity {
 
         if (profileType.equalsIgnoreCase("agent")) {
             String agency = editTextAgency.getText().toString().trim();
-            if (agency.isEmpty()) {
-                Toast.makeText(this, "Por favor, ingresa el nombre de la agencia", Toast.LENGTH_SHORT).show();
-                return false;
-            }
         }
 
         if (profileType.equalsIgnoreCase("team")) {
@@ -378,9 +442,12 @@ public class ProfileFormActivity extends AppCompatActivity {
                 // Campos específicos según el tipo de perfil
                 if (profileType.equalsIgnoreCase("athlete")) {
                     profileRequest.setLastName(editTextLastName.getText().toString().trim());
-                    profileRequest.setBirthdate(editTextBirthdate.getText().toString().trim());
+                    // Usar la fecha en formato ISO (YYYY-MM-DD)
+                    profileRequest.setBirthdate(selectedBirthdate);
                     profileRequest.setHeight(editTextHeight.getText().toString().trim());
                     profileRequest.setWeight(editTextWeight.getText().toString().trim());
+
+                    Log.d(TAG, "Athlete profile - Birthdate ISO: " + selectedBirthdate);
                 } else if (profileType.equalsIgnoreCase("agent")) {
                     profileRequest.setLastName(editTextLastName.getText().toString().trim());
                     profileRequest.setAgency(editTextAgency.getText().toString().trim());
@@ -399,50 +466,60 @@ public class ProfileFormActivity extends AppCompatActivity {
                                 buttonComplete.setEnabled(true);
 
                                 if (response.isSuccessful() && response.body() != null) {
-                                    ProfileResponse profileResponse = response.body();
+                                    // Si la respuesta HTTP es exitosa (200-299), el perfil se creó correctamente
+                                    Log.d(TAG, "Perfil creado exitosamente - Status: " + response.code());
 
-                                    if (profileResponse.isSuccess()) {
-                                        // Guardar la sesión en segundo plano
-                                        threadManager.executeInBackground(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                sessionManager.saveSession(token, userId, email, profileType);
+                                    // Guardar la sesión en segundo plano
+                                    threadManager.executeInBackground(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            sessionManager.saveSession(token, userId, email, profileType);
 
-                                                // Navegar en el hilo principal
-                                                threadManager.executeOnMainThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        Toast.makeText(ProfileFormActivity.this,
-                                                            "¡Perfil creado exitosamente!", Toast.LENGTH_SHORT).show();
+                                            // Navegar en el hilo principal
+                                            threadManager.executeOnMainThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    Toast.makeText(ProfileFormActivity.this,
+                                                        "¡Perfil creado exitosamente!", Toast.LENGTH_SHORT).show();
 
-                                                        // Pequeño delay para mostrar el mensaje
-                                                        threadManager.executeWithDelay(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                Intent intent = new Intent(ProfileFormActivity.this, HomeActivity.class);
-                                                                startActivity(intent);
-                                                                finish();
-                                                            }
-                                                        }, 500);
-                                                    }
-                                                });
-                                            }
-                                        });
-                                    } else {
-                                        String errorMsg = profileResponse.getMessage();
-                                        if (errorMsg == null || errorMsg.isEmpty()) {
-                                            errorMsg = "Error al crear el perfil";
+                                                    // Pequeño delay para mostrar el mensaje
+                                                    threadManager.executeWithDelay(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            Log.d(TAG, "Navegando a HomeActivity...");
+                                                            Intent intent = new Intent(ProfileFormActivity.this, HomeActivity.class);
+                                                            startActivity(intent);
+                                                            finish();
+                                                        }
+                                                    }, 500);
+                                                }
+                                            });
                                         }
-                                        Toast.makeText(ProfileFormActivity.this,
-                                            errorMsg, Toast.LENGTH_LONG).show();
-                                    }
+                                    });
                                 } else {
-                                    String errorMsg = response.message();
-                                    if (errorMsg == null || errorMsg.isEmpty()) {
-                                        errorMsg = "Error desconocido en el servidor";
+                                    // Manejar error del servidor
+                                    Log.e(TAG, "Error al crear perfil - Status: " + response.code());
+                                    String errorMsg = "Error al crear perfil";
+
+                                    try {
+                                        if (response.errorBody() != null) {
+                                            String errorBody = response.errorBody().string();
+                                            Log.e(TAG, "Error body: " + errorBody);
+                                            // Intentar extraer el mensaje de error del JSON
+                                            if (errorBody.contains("message")) {
+                                                int start = errorBody.indexOf("\"message\":\"") + 11;
+                                                int end = errorBody.indexOf("\"", start);
+                                                if (start > 10 && end > start) {
+                                                    errorMsg = errorBody.substring(start, end);
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Error al parsear error body: " + e.getMessage());
                                     }
+
                                     Toast.makeText(ProfileFormActivity.this,
-                                        "Error al crear perfil: " + errorMsg, Toast.LENGTH_LONG).show();
+                                        errorMsg, Toast.LENGTH_LONG).show();
                                 }
                             }
                         });
