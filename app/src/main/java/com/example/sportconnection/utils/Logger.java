@@ -47,7 +47,7 @@ public class Logger {
         }
     }
 
-    // Método especial para logs que SIEMPRE deben mostrarse
+    // para logs que SIEMPRE deben mostrarse
     public static void forceLog(String tag, String message) {
         Log.wtf(BASE_TAG + "_" + tag, message);
     }

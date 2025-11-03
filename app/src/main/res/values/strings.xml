@@ -1,5 +1,4 @@
 <resources>
     <string name="app_name">SportConnection</string>
-    <!-- TODO: Reemplazar con tu Web Client ID de Google Cloud Console -->
     <string name="default_web_client_id">353463807763-tku1j31jtdti65g1j3urcl3gg99mufc6.apps.googleusercontent.com</string>
 </resources>

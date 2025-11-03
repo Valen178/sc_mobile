@@ -36,7 +36,7 @@ public class ApiClient {
         return retrofit;
     }
 
-    // Método para cambiar la URL base si es necesario
+    // cambiar la URL base si es necesario
     public static void setBaseUrl(String baseUrl) {
         retrofit = null;
         // Recrear con la nueva URL

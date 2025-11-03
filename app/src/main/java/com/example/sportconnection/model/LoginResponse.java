@@ -44,7 +44,7 @@ public class LoginResponse {
         this.requiresProfile = requiresProfile;
     }
 
-    // Método helper para obtener el userId directamente
+    // helper para obtener el userId directamente
     public int getUserId() {
         return user != null ? user.getId() : 0;
     }
@@ -81,7 +81,7 @@ public class LoginResponse {
             this.profileType = profileType;
         }
 
-        // Método adicional por si necesitamos acceder como "role"
+        // adicional por si necesitamos acceder como "role"
         public String getRole() {
             return profileType;
         }
