@@ -26,7 +26,7 @@
 
 ### 1. Registro de Usuario
 
-**Endpoint:** `POST /api/auth/signup`
+**Endpoint:** `POST /auth/signup`
 
 **Descripción:** Crea un nuevo usuario en el sistema con email y contraseña.
 
@@ -61,7 +61,7 @@
 
 ### 2. Inicio de Sesión
 
-**Endpoint:** `POST /api/auth/login`
+**Endpoint:** `POST /auth/login`
 
 **Descripción:** Inicia sesión con email y contraseña.
 
@@ -95,7 +95,7 @@
 
 ### 3. Login con Google
 
-**Endpoint:** `POST /api/auth/google`
+**Endpoint:** `POST /auth/google`
 
 **Descripción:** Inicia sesión usando autenticación de Google OAuth.
 
@@ -150,7 +150,7 @@
 
 ### 4. Completar Perfil
 
-**Endpoint:** `POST /api/auth/complete-profile`
+**Endpoint:** `POST /auth/complete-profile`
 
 **Descripción:** Crea el perfil específico del usuario (athlete, agent o team). **Obligatorio después del registro.**
 
@@ -255,7 +255,7 @@ Authorization: Bearer {token}
 
 ### 5. Obtener Mi Perfil
 
-**Endpoint:** `GET /api/profile/me`
+**Endpoint:** `GET /profile/me`
 
 **Descripción:** Obtiene el perfil completo del usuario autenticado.
 
@@ -310,7 +310,7 @@ Authorization: Bearer {token}
 
 ### 6. Actualizar Mi Perfil
 
-**Endpoint:** `PUT /api/profile/me`
+**Endpoint:** `PUT /profile/me`
 
 **Descripción:** Actualiza el perfil del usuario autenticado. Solo envía los campos que deseas actualizar.
 
@@ -379,7 +379,7 @@ Authorization: Bearer {token}
 
 ### 7. Eliminar Mi Perfil y Usuario
 
-**Endpoint:** `DELETE /api/profile/me`
+**Endpoint:** `DELETE /profile/me`
 
 **Descripción:** Elimina permanentemente el perfil y la cuenta del usuario autenticado.
 
@@ -406,7 +406,7 @@ Authorization: Bearer {token}
 
 ### 8. Subir Foto de Perfil
 
-**Endpoint:** `POST /api/profile-photo/upload`
+**Endpoint:** `POST /profile-photo/upload`
 
 **Descripción:** Sube una foto de perfil para el usuario autenticado. La foto se almacena en Supabase Storage.
 
@@ -445,7 +445,7 @@ photo: [archivo de imagen]
 
 ### 9. Eliminar Foto de Perfil
 
-**Endpoint:** `DELETE /api/profile-photo/delete`
+**Endpoint:** `DELETE /profile-photo/delete`
 
 **Descripción:** Elimina la foto de perfil del usuario autenticado.
 
@@ -472,7 +472,7 @@ Authorization: Bearer {token}
 
 ### 10. Dar Like o Dislike
 
-**Endpoint:** `POST /api/swipe`
+**Endpoint:** `POST /swipe`
 
 **Descripción:** Registra un like o dislike a otro usuario. Si ambos usuarios se dan like, se crea un match automáticamente.
 
@@ -526,7 +526,7 @@ Authorization: Bearer {token}
 
 ### 11. Obtener Usuarios para Descubrir
 
-**Endpoint:** `GET /api/swipe/discover`
+**Endpoint:** `GET /swipe/discover`
 
 **Descripción:** Obtiene una lista de usuarios disponibles para dar swipe, filtrados por deporte y tipo de perfil.
 
@@ -548,7 +548,7 @@ Authorization: Bearer {token}
 
 **Ejemplo de Request:**
 ```
-GET /api/swipe/discover?profile_type_filter=team&limit=20
+GET /swipe/discover?profile_type_filter=team&limit=20
 ```
 
 **Respuesta Exitosa (200):**
@@ -599,7 +599,7 @@ GET /api/swipe/discover?profile_type_filter=team&limit=20
 
 ### 12. Obtener Mis Matches
 
-**Endpoint:** `GET /api/swipe/matches`
+**Endpoint:** `GET /swipe/matches`
 
 **Descripción:** Obtiene todos los matches activos del usuario autenticado.
 
@@ -650,7 +650,7 @@ Authorization: Bearer {token}
 
 ### 13. Crear Publicación
 
-**Endpoint:** `POST /api/posts`
+**Endpoint:** `POST /posts`
 
 **Descripción:** Crea una nueva publicación asociada al usuario autenticado.
 
@@ -689,7 +689,7 @@ Authorization: Bearer {token}
 
 ### 14. Obtener Todas las Publicaciones
 
-**Endpoint:** `GET /api/posts`
+**Endpoint:** `GET /posts`
 
 **Descripción:** Obtiene todas las publicaciones ordenadas por fecha (más recientes primero). **Ruta pública.**
 
@@ -718,7 +718,7 @@ Authorization: Bearer {token}
 
 ### 15. Obtener Mis Publicaciones
 
-**Endpoint:** `GET /api/posts/my-posts`
+**Endpoint:** `GET /posts/my-posts`
 
 **Descripción:** Obtiene todas las publicaciones del usuario autenticado.
 
@@ -752,7 +752,7 @@ Authorization: Bearer {token}
 
 ### 16. Obtener Publicación por ID
 
-**Endpoint:** `GET /api/posts/:id`
+**Endpoint:** `GET /posts/:id`
 
 **Descripción:** Obtiene una publicación específica por su ID. **Ruta pública.**
 
@@ -763,7 +763,7 @@ Authorization: Bearer {token}
 
 **Ejemplo:**
 ```
-GET /api/posts/1
+GET /posts/1
 ```
 
 **Respuesta Exitosa (200):**
@@ -790,7 +790,7 @@ GET /api/posts/1
 
 ### 17. Eliminar Publicación
 
-**Endpoint:** `DELETE /api/posts/:id`
+**Endpoint:** `DELETE /posts/:id`
 
 **Descripción:** Elimina una publicación específica. Solo el propietario puede eliminar su publicación.
 
@@ -804,7 +804,7 @@ Authorization: Bearer {token}
 
 **Ejemplo:**
 ```
-DELETE /api/posts/1
+DELETE /posts/1
 ```
 
 **Respuesta Exitosa (200):**
@@ -824,7 +824,7 @@ DELETE /api/posts/1
 
 ### 18. Obtener Planes Disponibles
 
-**Endpoint:** `GET /api/subscriptions/plans`
+**Endpoint:** `GET /subscriptions/plans`
 
 **Descripción:** Obtiene todos los planes de suscripción disponibles. **Ruta pública.**
 
@@ -850,7 +850,7 @@ DELETE /api/posts/1
 
 ### 19. Crear Sesión de Checkout
 
-**Endpoint:** `POST /api/subscriptions/create-checkout-session`
+**Endpoint:** `POST /subscriptions/create-checkout-session`
 
 **Descripción:** Crea una sesión de checkout de Stripe para que el usuario pueda pagar una suscripción.
 
@@ -890,7 +890,7 @@ Authorization: Bearer {token}
 
 ### 20. Verificar Estado del Pago
 
-**Endpoint:** `GET /api/subscriptions/verify-payment`
+**Endpoint:** `GET /subscriptions/verify-payment`
 
 **Descripción:** Verifica el estado de la última suscripción del usuario.
 
@@ -923,7 +923,7 @@ Authorization: Bearer {token}
 
 ### 21. Obtener Estado de Suscripción
 
-**Endpoint:** `GET /api/subscriptions/status`
+**Endpoint:** `GET /subscriptions/status`
 
 **Descripción:** Obtiene detalles completos de la suscripción activa del usuario.
 
@@ -961,7 +961,7 @@ Authorization: Bearer {token}
 
 ### 22. Cancelar Suscripción
 
-**Endpoint:** `POST /api/subscriptions/cancel`
+**Endpoint:** `POST /subscriptions/cancel`
 
 **Descripción:** Cancela la suscripción activa del usuario inmediatamente.
 
@@ -986,7 +986,7 @@ Authorization: Bearer {token}
 
 ### 23. Webhook de Stripe
 
-**Endpoint:** `POST /api/subscriptions/webhook`
+**Endpoint:** `POST /subscriptions/webhook`
 
 **Descripción:** Endpoint para recibir eventos de Stripe (pago exitoso, cancelación, etc.). **Uso interno de Stripe.**
 
@@ -1015,7 +1015,7 @@ Content-Type: application/json
 
 ### 24. Marcar Suscripciones Expiradas
 
-**Endpoint:** `POST /api/subscriptions/mark-expired`
+**Endpoint:** `POST /subscriptions/mark-expired`
 
 **Descripción:** Marca como expiradas todas las suscripciones activas cuya fecha de finalización ya pasó. **Útil para ejecutar con cron job.**
 
@@ -1043,7 +1043,7 @@ Content-Type: application/json
 
 ### 25. Obtener Venues Cercanos
 
-**Endpoint:** `GET /api/venues`
+**Endpoint:** `GET /venues`
 
 **Descripción:** Obtiene lugares deportivos cercanos usando Google Maps API. Incluye cache de 24 horas.
 
@@ -1059,7 +1059,7 @@ Authorization: Bearer {token}
 
 **Ejemplo:**
 ```
-GET /api/venues?lat=34.0522&lng=-118.2437&sport_id=1
+GET /venues?lat=34.0522&lng=-118.2437&sport_id=1
 ```
 
 **Respuesta Exitosa (200):**
@@ -1102,7 +1102,7 @@ GET /api/venues?lat=34.0522&lng=-118.2437&sport_id=1
 
 ### 26. Obtener Detalles de un Venue
 
-**Endpoint:** `GET /api/venues/:placeId`
+**Endpoint:** `GET /venues/:placeId`
 
 **Descripción:** Obtiene detalles completos de un venue específico por su Place ID de Google.
 
@@ -1116,7 +1116,7 @@ Authorization: Bearer {token}
 
 **Ejemplo:**
 ```
-GET /api/venues/ChIJN1t_tDeuEmsRUsoyG83frY4
+GET /venues/ChIJN1t_tDeuEmsRUsoyG83frY4
 ```
 
 **Respuesta Exitosa (200):**
@@ -1150,7 +1150,7 @@ GET /api/venues/ChIJN1t_tDeuEmsRUsoyG83frY4
 
 ### 27. Obtener Todos los Deportes
 
-**Endpoint:** `GET /api/lookup/sports`
+**Endpoint:** `GET /lookup/sports`
 
 **Descripción:** Obtiene la lista completa de deportes disponibles. **Ruta pública.**
 
@@ -1177,7 +1177,7 @@ GET /api/venues/ChIJN1t_tDeuEmsRUsoyG83frY4
 
 ### 28. Obtener Todas las Ubicaciones
 
-**Endpoint:** `GET /api/lookup/locations`
+**Endpoint:** `GET /lookup/locations`
 
 **Descripción:** Obtiene la lista completa de ubicaciones disponibles. **Ruta pública.**
 
@@ -1217,7 +1217,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 29. Obtener Todos los Usuarios
 
-**Endpoint:** `GET /api/admin/users`
+**Endpoint:** `GET /admin/users`
 
 **Respuesta Exitosa (200):**
 ```json
@@ -1246,7 +1246,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 30. Obtener Usuario por ID
 
-**Endpoint:** `GET /api/admin/users/:id`
+**Endpoint:** `GET /admin/users/:id`
 
 **Parámetros de URL:**
 - `id`: ID del usuario
@@ -1281,7 +1281,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 31. Actualizar Usuario
 
-**Endpoint:** `PUT /api/admin/users/:id`
+**Endpoint:** `PUT /admin/users/:id`
 
 **Parámetros de URL:**
 - `id`: ID del usuario
@@ -1309,7 +1309,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 32. Eliminar Usuario
 
-**Endpoint:** `DELETE /api/admin/users/:id`
+**Endpoint:** `DELETE /admin/users/:id`
 
 **Parámetros de URL:**
 - `id`: ID del usuario
@@ -1325,7 +1325,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 33. Cambiar Rol de Usuario
 
-**Endpoint:** `PATCH /api/admin/users/:id/role`
+**Endpoint:** `PATCH /admin/users/:id/role`
 
 **Parámetros de URL:**
 - `id`: ID del usuario
@@ -1362,7 +1362,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 34. Obtener Todos los Deportes (Admin)
 
-**Endpoint:** `GET /api/admin/sports`
+**Endpoint:** `GET /admin/sports`
 
 **Respuesta Exitosa (200):**
 ```json
@@ -1380,7 +1380,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 35. Obtener Deporte por ID
 
-**Endpoint:** `GET /api/admin/sports/:id`
+**Endpoint:** `GET /admin/sports/:id`
 
 **Parámetros de URL:**
 - `id`: ID del deporte
@@ -1404,7 +1404,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 36. Crear Deporte
 
-**Endpoint:** `POST /api/admin/sports`
+**Endpoint:** `POST /admin/sports`
 
 **Request Body:**
 ```json
@@ -1433,7 +1433,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 37. Actualizar Deporte
 
-**Endpoint:** `PUT /api/admin/sports/:id`
+**Endpoint:** `PUT /admin/sports/:id`
 
 **Parámetros de URL:**
 - `id`: ID del deporte
@@ -1458,7 +1458,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 38. Eliminar Deporte
 
-**Endpoint:** `DELETE /api/admin/sports/:id`
+**Endpoint:** `DELETE /admin/sports/:id`
 
 **Parámetros de URL:**
 - `id`: ID del deporte
@@ -1476,7 +1476,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 39. Obtener Todas las Ubicaciones (Admin)
 
-**Endpoint:** `GET /api/admin/locations`
+**Endpoint:** `GET /admin/locations`
 
 **Respuesta Exitosa (200):**
 ```json
@@ -1496,7 +1496,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 40. Obtener Ubicación por ID
 
-**Endpoint:** `GET /api/admin/locations/:id`
+**Endpoint:** `GET /admin/locations/:id`
 
 **Parámetros de URL:**
 - `id`: ID de la ubicación
@@ -1516,7 +1516,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 41. Crear Ubicación
 
-**Endpoint:** `POST /api/admin/locations`
+**Endpoint:** `POST /admin/locations`
 
 **Request Body:**
 ```json
@@ -1549,7 +1549,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 42. Actualizar Ubicación
 
-**Endpoint:** `PUT /api/admin/locations/:id`
+**Endpoint:** `PUT /admin/locations/:id`
 
 **Parámetros de URL:**
 - `id`: ID de la ubicación
@@ -1578,7 +1578,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 43. Eliminar Ubicación
 
-**Endpoint:** `DELETE /api/admin/locations/:id`
+**Endpoint:** `DELETE /admin/locations/:id`
 
 **Parámetros de URL:**
 - `id`: ID de la ubicación
@@ -1596,7 +1596,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 44. Obtener Todas las Publicaciones (Admin)
 
-**Endpoint:** `GET /api/admin/posts`
+**Endpoint:** `GET /admin/posts`
 
 **Respuesta Exitosa (200):**
 ```json
@@ -1621,7 +1621,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 45. Obtener Publicación por ID (Admin)
 
-**Endpoint:** `GET /api/admin/posts/:id`
+**Endpoint:** `GET /admin/posts/:id`
 
 **Parámetros de URL:**
 - `id`: ID de la publicación
@@ -1646,7 +1646,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 46. Eliminar Publicación (Admin)
 
-**Endpoint:** `DELETE /api/admin/posts/:id`
+**Endpoint:** `DELETE /admin/posts/:id`
 
 **Parámetros de URL:**
 - `id`: ID de la publicación
@@ -1664,7 +1664,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 47. Obtener Todos los Planes (Admin)
 
-**Endpoint:** `GET /api/admin/plans`
+**Endpoint:** `GET /admin/plans`
 
 **Respuesta Exitosa (200):**
 ```json
@@ -1683,7 +1683,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 48. Crear Plan
 
-**Endpoint:** `POST /api/admin/plans`
+**Endpoint:** `POST /admin/plans`
 
 **Request Body:**
 ```json
@@ -1714,7 +1714,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 49. Eliminar Plan
 
-**Endpoint:** `DELETE /api/admin/plans/:id`
+**Endpoint:** `DELETE /admin/plans/:id`
 
 **Parámetros de URL:**
 - `id`: ID del plan
@@ -1730,7 +1730,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 50. Obtener Todas las Suscripciones (Admin)
 
-**Endpoint:** `GET /api/admin/subscriptions`
+**Endpoint:** `GET /admin/subscriptions`
 
 **Respuesta Exitosa (200):**
 ```json
@@ -1759,7 +1759,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 51. Obtener Suscripción por ID (Admin)
 
-**Endpoint:** `GET /api/admin/subscriptions/:id`
+**Endpoint:** `GET /admin/subscriptions/:id`
 
 **Parámetros de URL:**
 - `id`: ID de la suscripción
@@ -1788,7 +1788,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 52. Actualizar Suscripción
 
-**Endpoint:** `PUT /api/admin/subscriptions/:id`
+**Endpoint:** `PUT /admin/subscriptions/:id`
 
 **Parámetros de URL:**
 - `id`: ID de la suscripción
@@ -1841,7 +1841,7 @@ Authorization: Bearer {token_de_admin}
 
 ### 53. Eliminar Suscripción (Admin)
 
-**Endpoint:** `DELETE /api/admin/subscriptions/:id`
+**Endpoint:** `DELETE /admin/subscriptions/:id`
 
 **Parámetros de URL:**
 - `id`: ID de la suscripción
@@ -1886,7 +1886,7 @@ PORT=3000
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
 
 # Google Maps
 GOOGLE_MAPS_API_KEY=your-google-maps-api-key

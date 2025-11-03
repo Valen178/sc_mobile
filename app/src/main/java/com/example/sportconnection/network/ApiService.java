@@ -8,6 +8,7 @@ import com.example.sportconnection.model.ProfileRequest;
 import com.example.sportconnection.model.ProfileResponse;
 import com.example.sportconnection.model.Sport;
 import com.example.sportconnection.model.Location;
+import com.example.sportconnection.model.GoogleSignInRequest;
 
 import java.util.List;
 
@@ -22,26 +23,30 @@ import retrofit2.http.Path;
 public interface ApiService {
 
     // Endpoints de autenticación
-    @POST("auth/signup")
+    @POST("/auth/signup")
     Call<SignupResponse> signup(@Body SignupRequest request);
 
-    @POST("auth/login")
+    @POST("/auth/login")
     Call<LoginResponse> login(@Body LoginRequest request);
 
+    // Endpoint de Google Sign-In (único para login y signup)
+    @POST("/auth/google")
+    Call<LoginResponse> googleSignIn(@Body GoogleSignInRequest request);
+
     // Endpoints de perfil
-    @POST("auth/complete-profile")
+    @POST("/auth/complete-profile")
     Call<ProfileResponse> createProfile(
             @Header("Authorization") String token,
             @Body ProfileRequest request
     );
 
-    @GET("profile/me/{id}")
+    @GET("/profile/me/{id}")
     Call<ProfileResponse> getProfile(
             @Header("Authorization") String token,
             @Path("id") int profileId
     );
 
-    @PUT("profile/me/{id}")
+    @PUT("/profile/me/{id}")
     Call<ProfileResponse> updateProfile(
             @Header("Authorization") String token,
             @Path("id") int profileId,
@@ -49,10 +54,10 @@ public interface ApiService {
     );
 
     // Endpoints de lookup (deportes y ubicaciones)
-    @GET("lookup/sports")
+    @GET("/lookup/sports")
     Call<List<Sport>> getSports();
 
-    @GET("lookup/locations")
+    @GET("/lookup/locations")
     Call<List<Location>> getLocations();
 }
 

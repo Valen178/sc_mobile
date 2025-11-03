@@ -56,10 +56,35 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Continuar"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/dividerOrRegister"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextConfirmPassword" />
+
+    <TextView
+        android:id="@+id/dividerOrRegister"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="o"
+        android:textSize="16sp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonGoogleSignUp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonContinue" />
+
+    <Button
+        android:id="@+id/buttonGoogleSignUp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Registrarse con Google"
+        android:drawableLeft="@android:drawable/ic_dialog_info"
+        android:drawablePadding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dividerOrRegister" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

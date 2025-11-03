@@ -45,10 +45,35 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Iniciar Sesión"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/dividerOr"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextPassword" />
+
+    <TextView
+        android:id="@+id/dividerOr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="o"
+        android:textSize="16sp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/buttonGoogleSignIn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonLogin" />
+
+    <Button
+        android:id="@+id/buttonGoogleSignIn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Continuar con Google"
+        android:drawableLeft="@android:drawable/ic_dialog_info"
+        android:drawablePadding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dividerOr" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

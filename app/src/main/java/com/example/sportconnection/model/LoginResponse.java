@@ -6,6 +6,9 @@ public class LoginResponse {
     private String token;
     private UserData user;
 
+    @SerializedName("requiresProfile")
+    private boolean requiresProfile;
+
     // Para mantener compatibilidad con código existente
     public boolean isSuccess() {
         // Si tenemos token y user, el login fue exitoso
@@ -31,6 +34,19 @@ public class LoginResponse {
 
     public void setUser(UserData user) {
         this.user = user;
+    }
+
+    public boolean isRequiresProfile() {
+        return requiresProfile;
+    }
+
+    public void setRequiresProfile(boolean requiresProfile) {
+        this.requiresProfile = requiresProfile;
+    }
+
+    // Método helper para obtener el userId directamente
+    public int getUserId() {
+        return user != null ? user.getId() : 0;
     }
 
     public static class UserData {

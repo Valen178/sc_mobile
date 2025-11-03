@@ -8,6 +8,7 @@ import com.example.sportconnection.model.SignupRequest;
 import com.example.sportconnection.model.ProfileRequest;
 import com.example.sportconnection.model.ProfileResponse;
 import com.example.sportconnection.model.SignupResponse;
+import com.example.sportconnection.model.GoogleSignInRequest;
 import com.example.sportconnection.network.ApiClient;
 import com.example.sportconnection.network.ApiService;
 
@@ -37,6 +38,15 @@ public class AuthRepository {
         Call<LoginResponse> call = apiService.login(request);
 
         Log.d(TAG, "Iniciando sesión: " + email);
+        call.enqueue(callback);
+    }
+
+    // Google Sign-In (unificado para login y signup)
+    public void googleSignIn(String idToken, Callback<LoginResponse> callback) {
+        GoogleSignInRequest request = new GoogleSignInRequest(idToken);
+        Call<LoginResponse> call = apiService.googleSignIn(request);
+
+        Log.d(TAG, "Iniciando sesión con Google (unificado)");
         call.enqueue(callback);
     }
 
