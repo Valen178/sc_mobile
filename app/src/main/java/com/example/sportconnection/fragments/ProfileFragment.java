@@ -330,6 +330,8 @@ public class ProfileFragment extends Fragment {
     private void openEditProfile() {
         Intent intent = new Intent(requireActivity(), ProfileFormActivity.class);
         intent.putExtra("isEditMode", true);
+        intent.putExtra("profileType", currentProfileType);
+        Log.d(TAG, "Abriendo formulario de edición con profileType: " + currentProfileType);
         startActivity(intent);
     }
 

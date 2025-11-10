@@ -84,12 +84,20 @@ public class ProfileFormActivity extends AppCompatActivity {
         isEditMode = getIntent().getBooleanExtra("isEditMode", false);
 
         if (isEditMode) {
-            // Modo edición - obtener desde sesión
+            // Modo edición - obtener desde sesión o intent
             sessionManager = new SessionManager(this);
             token = sessionManager.getToken();
             userId = sessionManager.getUserId();
-            profileType = sessionManager.getProfileType();
             email = sessionManager.getEmail();
+
+            // Intentar obtener profileType del intent primero (más confiable), si no, de la sesión
+            profileType = getIntent().getStringExtra("profileType");
+            if (profileType == null) {
+                profileType = sessionManager.getProfileType();
+                Log.d(TAG, "onCreate: ProfileType obtenido de sesión: " + profileType);
+            } else {
+                Log.d(TAG, "onCreate: ProfileType obtenido de intent: " + profileType);
+            }
 
             Log.d(TAG, "onCreate: Modo EDICIÓN - profileType=" + profileType);
         } else {
