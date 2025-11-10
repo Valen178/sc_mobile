@@ -26,7 +26,7 @@
 
 ### 1. Registro de Usuario
 
-**Endpoint:** `POST /auth/signup`
+**Endpoint:** `POST /api/auth/signup`
 
 **Descripción:** Crea un nuevo usuario en el sistema con email y contraseña.
 
@@ -61,7 +61,7 @@
 
 ### 2. Inicio de Sesión
 
-**Endpoint:** `POST /auth/login`
+**Endpoint:** `POST /api/auth/login`
 
 **Descripción:** Inicia sesión con email y contraseña.
 
@@ -95,7 +95,7 @@
 
 ### 3. Login con Google
 
-**Endpoint:** `POST /auth/google`
+**Endpoint:** `POST /api/auth/google`
 
 **Descripción:** Inicia sesión usando autenticación de Google OAuth.
 
@@ -150,7 +150,7 @@
 
 ### 4. Completar Perfil
 
-**Endpoint:** `POST /auth/complete-profile`
+**Endpoint:** `POST /api/auth/complete-profile`
 
 **Descripción:** Crea el perfil específico del usuario (athlete, agent o team). **Obligatorio después del registro.**
 
@@ -255,7 +255,7 @@ Authorization: Bearer {token}
 
 ### 5. Obtener Mi Perfil
 
-**Endpoint:** `GET /profile/me`
+**Endpoint:** `GET /api/profile/me`
 
 **Descripción:** Obtiene el perfil completo del usuario autenticado.
 
@@ -310,7 +310,7 @@ Authorization: Bearer {token}
 
 ### 6. Actualizar Mi Perfil
 
-**Endpoint:** `PUT /profile/me`
+**Endpoint:** `PUT /api/profile/me`
 
 **Descripción:** Actualiza el perfil del usuario autenticado. Solo envía los campos que deseas actualizar.
 
@@ -377,7 +377,115 @@ Authorization: Bearer {token}
 
 ---
 
-### 7. Eliminar Mi Perfil y Usuario
+### 7. Obtener Perfil de Otro Usuario
+
+**Endpoint:** `GET /profile/:userId`
+
+**Descripción:** Obtiene el perfil de otro usuario. Diseñado para ver perfiles en el contexto de matches o después de interacciones (swipes). Incluye validaciones de privacidad.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Parámetros de URL:**
+- `userId`: ID del usuario cuyo perfil se desea ver
+
+**Ejemplo:**
+```
+GET /profile/10
+```
+
+**Reglas de Privacidad:**
+- **Sin interacción**: Retorna perfil básico/limitado (nombre, foto, deporte, ubicación, descripción)
+- **Con interacción (swipe)**: Retorna perfil completo
+- **Con match activo**: Retorna perfil completo + contexto de match
+- No puedes usar este endpoint para ver tu propio perfil (usa `/profile/me`)
+
+**Respuesta Exitosa (200) - Perfil Limitado (Sin Interacción):**
+```json
+{
+  "user_id": 10,
+  "profile_type": "team",
+  "profile": {
+    "name": "FC Barcelona",
+    "photo_url": "https://...",
+    "sport": {
+      "id": 1,
+      "name": "Soccer"
+    },
+    "location": {
+      "id": 3,
+      "country": "Spain",
+      "province": "Catalonia",
+      "city": "Barcelona"
+    },
+    "description": "Looking for young talent"
+  },
+  "relationship": {
+    "has_interaction": false,
+    "has_match": false,
+    "can_view_full_profile": false
+  },
+  "limited_view": true
+}
+```
+
+**Respuesta Exitosa (200) - Perfil Completo (Con Interacción/Match):**
+```json
+{
+  "user_id": 10,
+  "profile_type": "team",
+  "profile": {
+    "id": 5,
+    "user_id": 10,
+    "name": "FC Barcelona",
+    "job": "Scout",
+    "description": "Looking for young talent",
+    "sport_id": 1,
+    "location_id": 3,
+    "phone_number": "+34123456789",
+    "ig_user": "barcelona_fc",
+    "x_user": "fcbarcelona",
+    "photo_url": "https://...",
+    "created_at": "2025-10-20T15:00:00.000Z",
+    "sport": {
+      "id": 1,
+      "name": "Soccer",
+      "created_at": "2025-10-01T00:00:00.000Z"
+    },
+    "location": {
+      "id": 3,
+      "country": "Spain",
+      "province": "Catalonia",
+      "city": "Barcelona",
+      "created_at": "2025-10-01T00:00:00.000Z"
+    }
+  },
+  "relationship": {
+    "has_interaction": true,
+    "has_match": true,
+    "can_view_full_profile": true
+  },
+  "limited_view": false
+}
+```
+
+**Casos de Uso:**
+- Ver perfil completo de un usuario con el que hiciste match
+- Ver perfil limitado antes de dar swipe
+- Ver información de contacto (teléfono, redes sociales) solo si hay match
+
+**Errores Posibles:**
+- `400`: Intentando ver tu propio perfil (usa `/profile/me`)
+- `401`: Token inválido
+- `404`: Usuario no encontrado
+- `404`: Perfil no encontrado
+- `500`: Error del servidor
+
+---
+
+### 8. Eliminar Mi Perfil y Usuario
 
 **Endpoint:** `DELETE /profile/me`
 
@@ -404,7 +512,7 @@ Authorization: Bearer {token}
 
 ## Foto de Perfil
 
-### 8. Subir Foto de Perfil
+### 9. Subir Foto de Perfil
 
 **Endpoint:** `POST /profile-photo/upload`
 
@@ -443,7 +551,7 @@ photo: [archivo de imagen]
 
 ---
 
-### 9. Eliminar Foto de Perfil
+### 10. Eliminar Foto de Perfil
 
 **Endpoint:** `DELETE /profile-photo/delete`
 
@@ -470,7 +578,7 @@ Authorization: Bearer {token}
 
 ## Sistema de Swipe y Matches
 
-### 10. Dar Like o Dislike
+### 11. Dar Like o Dislike
 
 **Endpoint:** `POST /swipe`
 
@@ -524,7 +632,7 @@ Authorization: Bearer {token}
 
 ---
 
-### 11. Obtener Usuarios para Descubrir
+### 12. Obtener Usuarios para Descubrir
 
 **Endpoint:** `GET /swipe/discover`
 
@@ -548,7 +656,7 @@ Authorization: Bearer {token}
 
 **Ejemplo de Request:**
 ```
-GET /swipe/discover?profile_type_filter=team&limit=20
+GET /api/swipe/discover?profile_type_filter=team&limit=20
 ```
 
 **Respuesta Exitosa (200):**
@@ -597,7 +705,7 @@ GET /swipe/discover?profile_type_filter=team&limit=20
 
 ---
 
-### 12. Obtener Mis Matches
+### 13. Obtener Mis Matches
 
 **Endpoint:** `GET /swipe/matches`
 
@@ -648,7 +756,7 @@ Authorization: Bearer {token}
 
 ## Publicaciones
 
-### 13. Crear Publicación
+### 14. Crear Publicación
 
 **Endpoint:** `POST /posts`
 
@@ -687,7 +795,7 @@ Authorization: Bearer {token}
 
 ---
 
-### 14. Obtener Todas las Publicaciones
+### 15. Obtener Todas las Publicaciones
 
 **Endpoint:** `GET /posts`
 
@@ -716,7 +824,7 @@ Authorization: Bearer {token}
 
 ---
 
-### 15. Obtener Mis Publicaciones
+### 16. Obtener Mis Publicaciones
 
 **Endpoint:** `GET /posts/my-posts`
 
@@ -750,7 +858,7 @@ Authorization: Bearer {token}
 
 ---
 
-### 16. Obtener Publicación por ID
+### 17. Obtener Publicación por ID
 
 **Endpoint:** `GET /posts/:id`
 
@@ -763,7 +871,7 @@ Authorization: Bearer {token}
 
 **Ejemplo:**
 ```
-GET /posts/1
+GET /api/posts/1
 ```
 
 **Respuesta Exitosa (200):**
@@ -788,7 +896,7 @@ GET /posts/1
 
 ---
 
-### 17. Eliminar Publicación
+### 18. Eliminar Publicación
 
 **Endpoint:** `DELETE /posts/:id`
 
@@ -804,7 +912,7 @@ Authorization: Bearer {token}
 
 **Ejemplo:**
 ```
-DELETE /posts/1
+DELETE /api/posts/1
 ```
 
 **Respuesta Exitosa (200):**
@@ -822,7 +930,7 @@ DELETE /posts/1
 
 ## Suscripciones
 
-### 18. Obtener Planes Disponibles
+### 19. Obtener Planes Disponibles
 
 **Endpoint:** `GET /subscriptions/plans`
 
@@ -848,7 +956,7 @@ DELETE /posts/1
 
 ---
 
-### 19. Crear Sesión de Checkout
+### 20. Crear Sesión de Checkout
 
 **Endpoint:** `POST /subscriptions/create-checkout-session`
 
@@ -888,7 +996,7 @@ Authorization: Bearer {token}
 
 ---
 
-### 20. Verificar Estado del Pago
+### 21. Verificar Estado del Pago
 
 **Endpoint:** `GET /subscriptions/verify-payment`
 
@@ -921,7 +1029,7 @@ Authorization: Bearer {token}
 
 ---
 
-### 21. Obtener Estado de Suscripción
+### 22. Obtener Estado de Suscripción
 
 **Endpoint:** `GET /subscriptions/status`
 
@@ -959,7 +1067,7 @@ Authorization: Bearer {token}
 
 ---
 
-### 22. Cancelar Suscripción
+### 23. Cancelar Suscripción
 
 **Endpoint:** `POST /subscriptions/cancel`
 
@@ -984,7 +1092,7 @@ Authorization: Bearer {token}
 
 ---
 
-### 23. Webhook de Stripe
+### 24. Webhook de Stripe
 
 **Endpoint:** `POST /subscriptions/webhook`
 
@@ -1013,7 +1121,7 @@ Content-Type: application/json
 
 ---
 
-### 24. Marcar Suscripciones Expiradas
+### 25. Marcar Suscripciones Expiradas
 
 **Endpoint:** `POST /subscriptions/mark-expired`
 
@@ -1041,7 +1149,7 @@ Content-Type: application/json
 
 ## Venues (Lugares Deportivos)
 
-### 25. Obtener Venues Cercanos
+### 26. Obtener Venues Cercanos
 
 **Endpoint:** `GET /venues`
 
@@ -1059,7 +1167,7 @@ Authorization: Bearer {token}
 
 **Ejemplo:**
 ```
-GET /venues?lat=34.0522&lng=-118.2437&sport_id=1
+GET /api/venues?lat=34.0522&lng=-118.2437&sport_id=1
 ```
 
 **Respuesta Exitosa (200):**
@@ -1100,7 +1208,7 @@ GET /venues?lat=34.0522&lng=-118.2437&sport_id=1
 
 ---
 
-### 26. Obtener Detalles de un Venue
+### 27. Obtener Detalles de un Venue
 
 **Endpoint:** `GET /venues/:placeId`
 
@@ -1116,7 +1224,7 @@ Authorization: Bearer {token}
 
 **Ejemplo:**
 ```
-GET /venues/ChIJN1t_tDeuEmsRUsoyG83frY4
+GET /api/venues/ChIJN1t_tDeuEmsRUsoyG83frY4
 ```
 
 **Respuesta Exitosa (200):**
@@ -1148,7 +1256,7 @@ GET /venues/ChIJN1t_tDeuEmsRUsoyG83frY4
 
 ## Lookup (Datos de Referencia)
 
-### 27. Obtener Todos los Deportes
+### 28. Obtener Todos los Deportes
 
 **Endpoint:** `GET /lookup/sports`
 
@@ -1175,7 +1283,7 @@ GET /venues/ChIJN1t_tDeuEmsRUsoyG83frY4
 
 ---
 
-### 28. Obtener Todas las Ubicaciones
+### 29. Obtener Todas las Ubicaciones
 
 **Endpoint:** `GET /lookup/locations`
 
@@ -1215,7 +1323,7 @@ GET /venues/ChIJN1t_tDeuEmsRUsoyG83frY4
 Authorization: Bearer {token_de_admin}
 ```
 
-### 29. Obtener Todos los Usuarios
+### 30. Obtener Todos los Usuarios
 
 **Endpoint:** `GET /admin/users`
 
@@ -1244,7 +1352,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 30. Obtener Usuario por ID
+### 31. Obtener Usuario por ID
 
 **Endpoint:** `GET /admin/users/:id`
 
@@ -1279,7 +1387,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 31. Actualizar Usuario
+### 32. Actualizar Usuario
 
 **Endpoint:** `PUT /admin/users/:id`
 
@@ -1307,7 +1415,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 32. Eliminar Usuario
+### 33. Eliminar Usuario
 
 **Endpoint:** `DELETE /admin/users/:id`
 
@@ -1323,7 +1431,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 33. Cambiar Rol de Usuario
+### 34. Cambiar Rol de Usuario
 
 **Endpoint:** `PATCH /admin/users/:id/role`
 
@@ -1360,7 +1468,7 @@ Authorization: Bearer {token_de_admin}
 
 ## Admin - Deportes
 
-### 34. Obtener Todos los Deportes (Admin)
+### 35. Obtener Todos los Deportes (Admin)
 
 **Endpoint:** `GET /admin/sports`
 
@@ -1378,7 +1486,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 35. Obtener Deporte por ID
+### 36. Obtener Deporte por ID
 
 **Endpoint:** `GET /admin/sports/:id`
 
@@ -1402,7 +1510,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 36. Crear Deporte
+### 37. Crear Deporte
 
 **Endpoint:** `POST /admin/sports`
 
@@ -1431,7 +1539,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 37. Actualizar Deporte
+### 38. Actualizar Deporte
 
 **Endpoint:** `PUT /admin/sports/:id`
 
@@ -1456,7 +1564,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 38. Eliminar Deporte
+### 39. Eliminar Deporte
 
 **Endpoint:** `DELETE /admin/sports/:id`
 
@@ -1474,7 +1582,7 @@ Authorization: Bearer {token_de_admin}
 
 ## Admin - Ubicaciones
 
-### 39. Obtener Todas las Ubicaciones (Admin)
+### 40. Obtener Todas las Ubicaciones (Admin)
 
 **Endpoint:** `GET /admin/locations`
 
@@ -1494,7 +1602,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 40. Obtener Ubicación por ID
+### 41. Obtener Ubicación por ID
 
 **Endpoint:** `GET /admin/locations/:id`
 
@@ -1514,7 +1622,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 41. Crear Ubicación
+### 42. Crear Ubicación
 
 **Endpoint:** `POST /admin/locations`
 
@@ -1547,7 +1655,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 42. Actualizar Ubicación
+### 43. Actualizar Ubicación
 
 **Endpoint:** `PUT /admin/locations/:id`
 
@@ -1576,7 +1684,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 43. Eliminar Ubicación
+### 44. Eliminar Ubicación
 
 **Endpoint:** `DELETE /admin/locations/:id`
 
@@ -1594,7 +1702,7 @@ Authorization: Bearer {token_de_admin}
 
 ## Admin - Publicaciones
 
-### 44. Obtener Todas las Publicaciones (Admin)
+### 45. Obtener Todas las Publicaciones (Admin)
 
 **Endpoint:** `GET /admin/posts`
 
@@ -1619,7 +1727,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 45. Obtener Publicación por ID (Admin)
+### 46. Obtener Publicación por ID (Admin)
 
 **Endpoint:** `GET /admin/posts/:id`
 
@@ -1644,7 +1752,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 46. Eliminar Publicación (Admin)
+### 47. Eliminar Publicación (Admin)
 
 **Endpoint:** `DELETE /admin/posts/:id`
 
@@ -1662,7 +1770,7 @@ Authorization: Bearer {token_de_admin}
 
 ## Admin - Suscripciones y Planes
 
-### 47. Obtener Todos los Planes (Admin)
+### 48. Obtener Todos los Planes (Admin)
 
 **Endpoint:** `GET /admin/plans`
 
@@ -1681,7 +1789,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 48. Crear Plan
+### 49. Crear Plan
 
 **Endpoint:** `POST /admin/plans`
 
@@ -1712,7 +1820,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 49. Eliminar Plan
+### 50. Eliminar Plan
 
 **Endpoint:** `DELETE /admin/plans/:id`
 
@@ -1728,7 +1836,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 50. Obtener Todas las Suscripciones (Admin)
+### 51. Obtener Todas las Suscripciones (Admin)
 
 **Endpoint:** `GET /admin/subscriptions`
 
@@ -1757,7 +1865,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 51. Obtener Suscripción por ID (Admin)
+### 52. Obtener Suscripción por ID (Admin)
 
 **Endpoint:** `GET /admin/subscriptions/:id`
 
@@ -1786,7 +1894,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 52. Actualizar Suscripción
+### 53. Actualizar Suscripción
 
 **Endpoint:** `PUT /admin/subscriptions/:id`
 
@@ -1839,7 +1947,7 @@ Authorization: Bearer {token_de_admin}
 
 ---
 
-### 53. Eliminar Suscripción (Admin)
+### 54. Eliminar Suscripción (Admin)
 
 **Endpoint:** `DELETE /admin/subscriptions/:id`
 
@@ -1886,7 +1994,7 @@ PORT=3000
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
 
 # Google Maps
 GOOGLE_MAPS_API_KEY=your-google-maps-api-key
@@ -1944,5 +2052,5 @@ Para probar los endpoints, puedes usar:
 
 ---
 
-**Documento generado:** 22 de octubre de 2025  
-**Total de Endpoints:** 53
+**Documento generado:** 4 de noviembre de 2025  
+**Total de Endpoints:** 54

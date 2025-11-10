@@ -1,63 +1,209 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/titleProfile"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Mi Perfil"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:padding="16dp">
 
-    <TextView
-        android:id="@+id/textProfile"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Tu información de perfil"
-        android:textAlignment="center"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/titleProfile" />
+        <TextView
+            android:id="@+id/titleProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mi Perfil"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/textUserEmail"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Email: "
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textProfile" />
+        <TextView
+            android:id="@+id/textProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Tu información de perfil"
+            android:textAlignment="center"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/titleProfile" />
 
-    <TextView
-        android:id="@+id/textUserType"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Tipo: "
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textUserEmail" />
+        <!-- Contenedor de información del perfil -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardProfileInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textProfile">
 
-    <Button
-        android:id="@+id/buttonLogout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="Cerrar Sesión"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textUserType" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:id="@+id/textUserEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Email: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/textUserType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tipo: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/textUserName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Nombre: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/textUserLastName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Apellido: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textUserBirthdate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Fecha de nacimiento: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textUserHeight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Altura: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textUserWeight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Peso: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textUserLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ubicación: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/textUserSport"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Deporte: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/textUserPhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Teléfono: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/textUserInstagram"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Instagram: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textUserTwitter"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="X (Twitter): "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textUserAgency"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Agencia: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textUserJob"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Puesto: "
+                    android:textSize="14sp"
+                    android:paddingBottom="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textUserDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Descripción: "
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/buttonEditProfile"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Editar Perfil"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cardProfileInfo" />
+
+        <Button
+            android:id="@+id/buttonLogout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:text="Cerrar Sesión"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/buttonEditProfile" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>
 

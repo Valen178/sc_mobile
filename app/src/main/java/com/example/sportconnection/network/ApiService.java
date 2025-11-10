@@ -6,6 +6,8 @@ import com.example.sportconnection.model.SignupRequest;
 import com.example.sportconnection.model.SignupResponse;
 import com.example.sportconnection.model.ProfileRequest;
 import com.example.sportconnection.model.ProfileResponse;
+import com.example.sportconnection.model.GetProfileResponse;
+import com.example.sportconnection.model.UpdateProfileRequest;
 import com.example.sportconnection.model.Sport;
 import com.example.sportconnection.model.Location;
 import com.example.sportconnection.model.GoogleSignInRequest;
@@ -18,7 +20,6 @@ import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
-import retrofit2.http.Path;
 
 public interface ApiService {
 
@@ -40,17 +41,15 @@ public interface ApiService {
             @Body ProfileRequest request
     );
 
-    @GET("/profile/me/{id}")
-    Call<ProfileResponse> getProfile(
-            @Header("Authorization") String token,
-            @Path("id") int profileId
+    @GET("/profile/me")
+    Call<GetProfileResponse> getProfile(
+            @Header("Authorization") String token
     );
 
-    @PUT("/profile/me/{id}")
+    @PUT("/profile/me")
     Call<ProfileResponse> updateProfile(
             @Header("Authorization") String token,
-            @Path("id") int profileId,
-            @Body ProfileRequest request
+            @Body UpdateProfileRequest request
     );
 
     // Endpoints de lookup (deportes y ubicaciones)

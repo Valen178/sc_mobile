@@ -7,6 +7,8 @@ import com.example.sportconnection.model.LoginResponse;
 import com.example.sportconnection.model.SignupRequest;
 import com.example.sportconnection.model.ProfileRequest;
 import com.example.sportconnection.model.ProfileResponse;
+import com.example.sportconnection.model.GetProfileResponse;
+import com.example.sportconnection.model.UpdateProfileRequest;
 import com.example.sportconnection.model.SignupResponse;
 import com.example.sportconnection.model.GoogleSignInRequest;
 import com.example.sportconnection.network.ApiClient;
@@ -60,20 +62,20 @@ public class AuthRepository {
     }
 
     // Obtener perfil
-    public void getProfile(String token, int profileId, Callback<ProfileResponse> callback) {
+    public void getProfile(String token, Callback<GetProfileResponse> callback) {
         String authHeader = "Bearer " + token;
-        Call<ProfileResponse> call = apiService.getProfile(authHeader, profileId);
+        Call<GetProfileResponse> call = apiService.getProfile(authHeader);
 
-        Log.d(TAG, "Obteniendo perfil ID: " + profileId);
+        Log.d(TAG, "Obteniendo perfil del usuario autenticado");
         call.enqueue(callback);
     }
 
     // Actualizar perfil
-    public void updateProfile(String token, int profileId, ProfileRequest request, Callback<ProfileResponse> callback) {
+    public void updateProfile(String token, UpdateProfileRequest request, Callback<ProfileResponse> callback) {
         String authHeader = "Bearer " + token;
-        Call<ProfileResponse> call = apiService.updateProfile(authHeader, profileId, request);
+        Call<ProfileResponse> call = apiService.updateProfile(authHeader, request);
 
-        Log.d(TAG, "Actualizando perfil ID: " + profileId);
+        Log.d(TAG, "Actualizando perfil del usuario autenticado");
         call.enqueue(callback);
     }
 }

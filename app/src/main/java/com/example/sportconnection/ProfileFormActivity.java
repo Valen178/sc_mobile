@@ -24,6 +24,8 @@ import java.util.Locale;
 import com.example.sportconnection.model.Location;
 import com.example.sportconnection.model.ProfileRequest;
 import com.example.sportconnection.model.ProfileResponse;
+import com.example.sportconnection.model.GetProfileResponse;
+import com.example.sportconnection.model.UpdateProfileRequest;
 import com.example.sportconnection.model.Sport;
 import com.example.sportconnection.repository.AuthRepository;
 import com.example.sportconnection.repository.LookupRepository;
@@ -53,6 +55,11 @@ public class ProfileFormActivity extends AppCompatActivity {
     private String email, password, profileType, token;
     private int userId;
 
+    // Variables para modo edición
+    private boolean isEditMode = false;
+    private int profileId = -1;
+    private GetProfileResponse.ProfileData currentProfile;
+
     private AuthRepository authRepository;
     private LookupRepository lookupRepository;
     private SessionManager sessionManager;
@@ -74,13 +81,27 @@ public class ProfileFormActivity extends AppCompatActivity {
         setContentView(R.layout.activity_profile_form);
 
         // Obtener datos del Intent
-        email = getIntent().getStringExtra("email");
-        password = getIntent().getStringExtra("password");
-        profileType = getIntent().getStringExtra("profileType");
-        token = getIntent().getStringExtra("token");
-        userId = getIntent().getIntExtra("userId", -1);
+        isEditMode = getIntent().getBooleanExtra("isEditMode", false);
 
-        Log.d(TAG, "onCreate: profileType=" + profileType + ", userId=" + userId);
+        if (isEditMode) {
+            // Modo edición - obtener desde sesión
+            sessionManager = new SessionManager(this);
+            token = sessionManager.getToken();
+            userId = sessionManager.getUserId();
+            profileType = sessionManager.getProfileType();
+            email = sessionManager.getEmail();
+
+            Log.d(TAG, "onCreate: Modo EDICIÓN - profileType=" + profileType);
+        } else {
+            // Modo creación - obtener desde intent
+            email = getIntent().getStringExtra("email");
+            password = getIntent().getStringExtra("password");
+            profileType = getIntent().getStringExtra("profileType");
+            token = getIntent().getStringExtra("token");
+            userId = getIntent().getIntExtra("userId", -1);
+
+            Log.d(TAG, "onCreate: Modo CREACIÓN - profileType=" + profileType + ", userId=" + userId);
+        }
 
         // Inicializar vistas
         titleProfileForm = findViewById(R.id.titleProfileForm);
@@ -101,7 +122,9 @@ public class ProfileFormActivity extends AppCompatActivity {
         // Inicializar repositorios y utilidades
         authRepository = new AuthRepository();
         lookupRepository = new LookupRepository();
-        sessionManager = new SessionManager(this);
+        if (sessionManager == null) {
+            sessionManager = new SessionManager(this);
+        }
         loadingDialog = new LoadingDialog(this);
         threadManager = ThreadManager.getInstance();
 
@@ -114,12 +137,22 @@ public class ProfileFormActivity extends AppCompatActivity {
         // Configurar el selector de fecha de nacimiento
         setupBirthdatePicker();
 
-        // Configurar el botón de completar
+        // Si es modo edición, cargar los datos actuales del perfil
+        if (isEditMode) {
+            buttonComplete.setText("Guardar Cambios");
+            loadCurrentProfile();
+        }
+
+        // Configurar el botón de completar/guardar
         buttonComplete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (validateForm()) {
-                    completeRegistration();
+                    if (isEditMode) {
+                        updateProfile();
+                    } else {
+                        completeRegistration();
+                    }
                 }
             }
         });
@@ -353,6 +386,11 @@ public class ProfileFormActivity extends AppCompatActivity {
                 public void run() {
                     loadingDialog.dismiss();
                     Log.d(TAG, "Datos cargados completamente");
+
+                    // Si estamos en modo edición y ya tenemos el perfil, llenar el formulario
+                    if (isEditMode && currentProfile != null) {
+                        populateFormWithProfileData();
+                    }
                 }
             });
         }
@@ -506,6 +544,232 @@ public class ProfileFormActivity extends AppCompatActivity {
                                             String errorBody = response.errorBody().string();
                                             Log.e(TAG, "Error body: " + errorBody);
                                             // Intentar extraer el mensaje de error del JSON
+                                            if (errorBody.contains("message")) {
+                                                int start = errorBody.indexOf("\"message\":\"") + 11;
+                                                int end = errorBody.indexOf("\"", start);
+                                                if (start > 10 && end > start) {
+                                                    errorMsg = errorBody.substring(start, end);
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Error al parsear error body: " + e.getMessage());
+                                    }
+
+                                    Toast.makeText(ProfileFormActivity.this,
+                                        errorMsg, Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(Call<ProfileResponse> call, Throwable t) {
+                        threadManager.executeOnMainThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadingDialog.dismiss();
+                                buttonComplete.setEnabled(true);
+
+                                String errorMsg = t.getMessage();
+                                if (errorMsg == null || errorMsg.isEmpty()) {
+                                    errorMsg = "Error desconocido";
+                                }
+                                Toast.makeText(ProfileFormActivity.this,
+                                    "Error de conexión: " + errorMsg, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadCurrentProfile() {
+        Log.d(TAG, "loadCurrentProfile: Cargando perfil del usuario autenticado");
+        loadingDialog.show("Cargando perfil...");
+
+        authRepository.getProfile(token, new Callback<GetProfileResponse>() {
+            @Override
+            public void onResponse(Call<GetProfileResponse> call, Response<GetProfileResponse> response) {
+                loadingDialog.dismiss();
+
+                if (response.isSuccessful() && response.body() != null) {
+                    GetProfileResponse profileResponse = response.body();
+                    if (profileResponse.getProfile() != null) {
+                        currentProfile = profileResponse.getProfile();
+                        profileId = currentProfile.getId(); // Guardar el ID del perfil para la actualización
+                        profileType = profileResponse.getProfileType(); // Actualizar el profileType del nivel superior
+                        populateFormWithProfileData();
+                    } else {
+                        Toast.makeText(ProfileFormActivity.this,
+                            "Error: Perfil no encontrado",
+                            Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                } else {
+                    Log.e(TAG, "Error al cargar perfil: " + response.code());
+                    Toast.makeText(ProfileFormActivity.this,
+                        "Error al cargar el perfil",
+                        Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<GetProfileResponse> call, Throwable t) {
+                loadingDialog.dismiss();
+                Log.e(TAG, "Error de conexión: " + t.getMessage());
+                Toast.makeText(ProfileFormActivity.this,
+                    "Error de conexión",
+                    Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        });
+    }
+
+    private void populateFormWithProfileData() {
+        if (currentProfile == null) return;
+
+        Log.d(TAG, "populateFormWithProfileData: Llenando formulario con datos");
+
+        // Llenar campos comunes
+        editTextName.setText(currentProfile.getName());
+        editTextDescription.setText(currentProfile.getDescription());
+        editTextPhone.setText(currentProfile.getPhoneNumber());
+        editTextInstagram.setText(currentProfile.getIgUser());
+        editTextTwitter.setText(currentProfile.getxUser());
+
+        // Seleccionar ubicación en el spinner
+        if (currentProfile.getLocationId() != null && !locationList.isEmpty()) {
+            for (int i = 0; i < locationList.size(); i++) {
+                if (locationList.get(i).getId() == currentProfile.getLocationId()) {
+                    spinnerLocation.setSelection(i);
+                    selectedLocationId = currentProfile.getLocationId();
+                    break;
+                }
+            }
+        }
+
+        // Seleccionar deporte en el spinner
+        if (currentProfile.getSportId() != null && !sportList.isEmpty()) {
+            for (int i = 0; i < sportList.size(); i++) {
+                if (sportList.get(i).getId() == currentProfile.getSportId()) {
+                    spinnerSport.setSelection(i);
+                    selectedSportId = currentProfile.getSportId();
+                    break;
+                }
+            }
+        }
+
+        // Llenar campos específicos por tipo de perfil
+        if ("athlete".equalsIgnoreCase(profileType)) {
+            editTextLastName.setText(currentProfile.getLastName());
+            editTextHeight.setText(currentProfile.getHeight());
+            editTextWeight.setText(currentProfile.getWeight());
+
+            // Convertir fecha de ISO (YYYY-MM-DD) a formato display (DD/MM/YYYY)
+            if (currentProfile.getBirthdate() != null && !currentProfile.getBirthdate().isEmpty()) {
+                selectedBirthdate = currentProfile.getBirthdate();
+                String displayDate = formatDateForDisplay(currentProfile.getBirthdate());
+                editTextBirthdate.setText(displayDate);
+
+                // Actualizar el calendario
+                try {
+                    String[] parts = currentProfile.getBirthdate().split("-");
+                    if (parts.length == 3) {
+                        birthdateCalendar.set(Calendar.YEAR, Integer.parseInt(parts[0]));
+                        birthdateCalendar.set(Calendar.MONTH, Integer.parseInt(parts[1]) - 1);
+                        birthdateCalendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(parts[2]));
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error al parsear fecha: " + e.getMessage());
+                }
+            }
+        } else if ("agent".equalsIgnoreCase(profileType)) {
+            editTextLastName.setText(currentProfile.getLastName());
+            editTextAgency.setText(currentProfile.getAgency());
+        } else if ("team".equalsIgnoreCase(profileType)) {
+            editTextLastName.setText(currentProfile.getJob());
+        }
+    }
+
+    private String formatDateForDisplay(String isoDate) {
+        // Convertir de YYYY-MM-DD a DD/MM/YYYY
+        if (isoDate != null && isoDate.length() == 10) {
+            String[] parts = isoDate.split("-");
+            if (parts.length == 3) {
+                return parts[2] + "/" + parts[1] + "/" + parts[0];
+            }
+        }
+        return isoDate;
+    }
+
+    private void updateProfile() {
+        Log.d(TAG, "updateProfile: Actualizando perfil");
+
+        loadingDialog.show("Actualizando perfil...");
+        buttonComplete.setEnabled(false);
+
+        threadManager.executeInBackground(new Runnable() {
+            @Override
+            public void run() {
+                // Crear el objeto UpdateProfileRequest con la estructura correcta
+                final UpdateProfileRequest updateRequest = new UpdateProfileRequest();
+
+                // Crear el objeto profileUpdates
+                UpdateProfileRequest.ProfileUpdates profileUpdates = new UpdateProfileRequest.ProfileUpdates();
+                profileUpdates.setName(editTextName.getText().toString().trim());
+                profileUpdates.setDescription(editTextDescription.getText().toString().trim());
+                profileUpdates.setPhoneNumber(editTextPhone.getText().toString().trim());
+                profileUpdates.setIgUser(editTextInstagram.getText().toString().trim());
+                profileUpdates.setxUser(editTextTwitter.getText().toString().trim());
+                profileUpdates.setLocationId(selectedLocationId);
+                profileUpdates.setSportId(selectedSportId);
+
+                // Campos específicos según el tipo de perfil
+                if (profileType.equalsIgnoreCase("athlete")) {
+                    profileUpdates.setLastName(editTextLastName.getText().toString().trim());
+                    profileUpdates.setBirthdate(selectedBirthdate);
+                    profileUpdates.setHeight(editTextHeight.getText().toString().trim());
+                    profileUpdates.setWeight(editTextWeight.getText().toString().trim());
+                } else if (profileType.equalsIgnoreCase("agent")) {
+                    profileUpdates.setLastName(editTextLastName.getText().toString().trim());
+                    profileUpdates.setAgency(editTextAgency.getText().toString().trim());
+                } else if (profileType.equalsIgnoreCase("team")) {
+                    profileUpdates.setJob(editTextLastName.getText().toString().trim());
+                }
+
+                // Establecer profileUpdates en el request
+                updateRequest.setProfileUpdates(profileUpdates);
+
+                Log.d(TAG, "updateProfile: Enviando actualización al backend");
+
+                // Enviar al backend
+                authRepository.updateProfile(token, updateRequest, new Callback<ProfileResponse>() {
+                    @Override
+                    public void onResponse(Call<ProfileResponse> call, Response<ProfileResponse> response) {
+                        threadManager.executeOnMainThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadingDialog.dismiss();
+                                buttonComplete.setEnabled(true);
+
+                                if (response.isSuccessful() && response.body() != null) {
+                                    Log.d(TAG, "Perfil actualizado exitosamente");
+                                    Toast.makeText(ProfileFormActivity.this,
+                                        "Perfil actualizado exitosamente", Toast.LENGTH_SHORT).show();
+
+                                    // Volver a la pantalla anterior
+                                    finish();
+                                } else {
+                                    Log.e(TAG, "Error al actualizar perfil - Status: " + response.code());
+                                    String errorMsg = "Error al actualizar perfil";
+
+                                    try {
+                                        if (response.errorBody() != null) {
+                                            String errorBody = response.errorBody().string();
+                                            Log.e(TAG, "Error body: " + errorBody);
                                             if (errorBody.contains("message")) {
                                                 int start = errorBody.indexOf("\"message\":\"") + 11;
                                                 int end = errorBody.indexOf("\"", start);
