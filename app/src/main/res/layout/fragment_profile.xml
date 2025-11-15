@@ -32,17 +32,52 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/titleProfile" />
 
+        <!-- Foto de perfil circular -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardProfilePhoto"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="75dp"
+            app:cardElevation="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textProfile">
+
+            <ImageView
+                android:id="@+id/imageProfilePhoto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_camera"
+                android:contentDescription="Foto de perfil" />
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Botón para cambiar foto -->
+        <Button
+            android:id="@+id/buttonChangePhoto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Cambiar Foto"
+            android:textSize="12sp"
+            android:padding="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cardProfilePhoto" />
+
         <!-- Contenedor de información del perfil -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardProfileInfo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             app:cardCornerRadius="8dp"
             app:cardElevation="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textProfile">
+            app:layout_constraintTop_toBottomOf="@id/buttonChangePhoto">
 
             <LinearLayout
                 android:layout_width="match_parent"

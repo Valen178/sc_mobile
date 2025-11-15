@@ -11,9 +11,16 @@ import com.example.sportconnection.model.GetProfileResponse;
 import com.example.sportconnection.model.UpdateProfileRequest;
 import com.example.sportconnection.model.SignupResponse;
 import com.example.sportconnection.model.GoogleSignInRequest;
+import com.example.sportconnection.model.UploadPhotoResponse;
+import com.example.sportconnection.model.DeletePhotoResponse;
 import com.example.sportconnection.network.ApiClient;
 import com.example.sportconnection.network.ApiService;
 
+import java.io.File;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 
@@ -76,6 +83,31 @@ public class AuthRepository {
         Call<ProfileResponse> call = apiService.updateProfile(authHeader, request);
 
         Log.d(TAG, "Actualizando perfil del usuario autenticado");
+        call.enqueue(callback);
+    }
+
+    // Subir foto de perfil
+    public void uploadProfilePhoto(String token, File photoFile, Callback<UploadPhotoResponse> callback) {
+        String authHeader = "Bearer " + token;
+
+        // Crear RequestBody para el archivo
+        RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), photoFile);
+
+        // Crear MultipartBody.Part para enviar el archivo
+        MultipartBody.Part photoPart = MultipartBody.Part.createFormData("photo", photoFile.getName(), requestFile);
+
+        Call<UploadPhotoResponse> call = apiService.uploadProfilePhoto(authHeader, photoPart);
+
+        Log.d(TAG, "Subiendo foto de perfil: " + photoFile.getName());
+        call.enqueue(callback);
+    }
+
+    // Eliminar foto de perfil
+    public void deleteProfilePhoto(String token, Callback<DeletePhotoResponse> callback) {
+        String authHeader = "Bearer " + token;
+        Call<DeletePhotoResponse> call = apiService.deleteProfilePhoto(authHeader);
+
+        Log.d(TAG, "Eliminando foto de perfil");
         call.enqueue(callback);
     }
 }

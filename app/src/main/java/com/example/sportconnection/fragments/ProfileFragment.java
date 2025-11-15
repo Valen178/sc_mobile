@@ -1,31 +1,48 @@
 package com.example.sportconnection.fragments;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.sportconnection.MainActivity;
 import com.example.sportconnection.ProfileFormActivity;
 import com.example.sportconnection.R;
+import com.example.sportconnection.model.DeletePhotoResponse;
 import com.example.sportconnection.model.Location;
 import com.example.sportconnection.model.GetProfileResponse;
 import com.example.sportconnection.model.Sport;
+import com.example.sportconnection.model.UploadPhotoResponse;
 import com.example.sportconnection.repository.AuthRepository;
 import com.example.sportconnection.repository.LookupRepository;
 import com.example.sportconnection.utils.LoadingDialog;
 import com.example.sportconnection.utils.SessionManager;
 import com.example.sportconnection.utils.ThreadManager;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.List;
 
 import retrofit2.Call;
@@ -34,7 +51,10 @@ import retrofit2.Response;
 
 public class ProfileFragment extends Fragment {
     private static final String TAG = "ProfileFragment";
+    private static final int REQUEST_PERMISSION_READ_STORAGE = 100;
 
+    private ImageView imageProfilePhoto;
+    private Button buttonChangePhoto;
     private TextView textUserEmail;
     private TextView textUserType;
     private TextView textUserName;
@@ -64,12 +84,22 @@ public class ProfileFragment extends Fragment {
     private List<Sport> sportList;
     private List<Location> locationList;
 
+    // Launcher para seleccionar imagen
+    private ActivityResultLauncher<Intent> pickImageLauncher;
+    // Launcher para permisos
+    private ActivityResultLauncher<String> requestPermissionLauncher;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        // Inicializar launchers
+        initializeLaunchers();
+
         // Inicializar vistas
+        imageProfilePhoto = view.findViewById(R.id.imageProfilePhoto);
+        buttonChangePhoto = view.findViewById(R.id.buttonChangePhoto);
         textUserEmail = view.findViewById(R.id.textUserEmail);
         textUserType = view.findViewById(R.id.textUserType);
         textUserName = view.findViewById(R.id.textUserName);
@@ -98,6 +128,14 @@ public class ProfileFragment extends Fragment {
         // Cargar información del usuario
         loadUserProfile();
 
+        // Configurar botón de cambiar foto
+        buttonChangePhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showPhotoOptions();
+            }
+        });
+
         // Configurar botón de editar perfil
         buttonEditProfile.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,6 +157,214 @@ public class ProfileFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void initializeLaunchers() {
+        // Launcher para seleccionar imagen
+        pickImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Uri imageUri = result.getData().getData();
+                        if (imageUri != null) {
+                            uploadPhotoFromUri(imageUri);
+                        }
+                    }
+                }
+        );
+
+        // Launcher para permisos
+        requestPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        openImagePicker();
+                    } else {
+                        Toast.makeText(requireContext(), "Permiso denegado", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+    }
+
+    private void showPhotoOptions() {
+        // Mostrar opciones para cambiar o eliminar foto
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Foto de perfil");
+
+        String[] options;
+        if (currentProfile != null && currentProfile.getPhotoUrl() != null && !currentProfile.getPhotoUrl().isEmpty()) {
+            options = new String[]{"Cambiar foto", "Eliminar foto", "Cancelar"};
+        } else {
+            options = new String[]{"Subir foto", "Cancelar"};
+        }
+
+        builder.setItems(options, (dialog, which) -> {
+            if (options[which].equals("Cambiar foto") || options[which].equals("Subir foto")) {
+                checkPermissionAndOpenPicker();
+            } else if (options[which].equals("Eliminar foto")) {
+                deleteProfilePhoto();
+            }
+        });
+
+        builder.show();
+    }
+
+    private void checkPermissionAndOpenPicker() {
+        // En Android 13+ (API 33+) no se necesita permiso para leer imágenes seleccionadas por el usuario
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            openImagePicker();
+        } else {
+            // Para versiones anteriores, verificar permiso de lectura
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                openImagePicker();
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+        }
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        pickImageLauncher.launch(intent);
+    }
+
+    private void uploadPhotoFromUri(Uri imageUri) {
+        loadingDialog.show("Subiendo foto...");
+
+        threadManager.executeInBackground(() -> {
+            try {
+                // Copiar el archivo a la caché de la app
+                File cacheDir = requireContext().getCacheDir();
+                File photoFile = new File(cacheDir, "profile_photo_" + System.currentTimeMillis() + ".jpg");
+
+                InputStream inputStream = requireContext().getContentResolver().openInputStream(imageUri);
+                FileOutputStream outputStream = new FileOutputStream(photoFile);
+
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+
+                inputStream.close();
+                outputStream.close();
+
+                // Subir el archivo en el hilo principal
+                threadManager.executeOnMainThread(() -> {
+                    uploadPhoto(photoFile);
+                });
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error al copiar archivo: " + e.getMessage());
+                threadManager.executeOnMainThread(() -> {
+                    loadingDialog.dismiss();
+                    Toast.makeText(requireContext(), "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    private void uploadPhoto(File photoFile) {
+        String token = sessionManager.getToken();
+        if (token == null) {
+            loadingDialog.dismiss();
+            Toast.makeText(requireContext(), "Error: Sesión no válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        authRepository.uploadProfilePhoto(token, photoFile, new Callback<UploadPhotoResponse>() {
+            @Override
+            public void onResponse(Call<UploadPhotoResponse> call, Response<UploadPhotoResponse> response) {
+                loadingDialog.dismiss();
+
+                if (response.isSuccessful() && response.body() != null) {
+                    UploadPhotoResponse uploadResponse = response.body();
+                    Toast.makeText(requireContext(), "Foto subida exitosamente", Toast.LENGTH_SHORT).show();
+
+                    // Actualizar la imagen inmediatamente
+                    if (uploadResponse.getPhotoUrl() != null) {
+                        loadProfilePhoto(uploadResponse.getPhotoUrl());
+                    }
+
+                    // Recargar el perfil completo
+                    loadUserProfile();
+                } else {
+                    Log.e(TAG, "Error al subir foto: " + response.code());
+                    Toast.makeText(requireContext(), "Error al subir la foto", Toast.LENGTH_SHORT).show();
+                }
+
+                // Eliminar el archivo temporal
+                if (photoFile.exists()) {
+                    photoFile.delete();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UploadPhotoResponse> call, Throwable t) {
+                loadingDialog.dismiss();
+                Log.e(TAG, "Error de conexión: " + t.getMessage());
+                Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
+
+                // Eliminar el archivo temporal
+                if (photoFile.exists()) {
+                    photoFile.delete();
+                }
+            }
+        });
+    }
+
+    private void deleteProfilePhoto() {
+        loadingDialog.show("Eliminando foto...");
+
+        String token = sessionManager.getToken();
+        if (token == null) {
+            loadingDialog.dismiss();
+            Toast.makeText(requireContext(), "Error: Sesión no válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        authRepository.deleteProfilePhoto(token, new Callback<DeletePhotoResponse>() {
+            @Override
+            public void onResponse(Call<DeletePhotoResponse> call, Response<DeletePhotoResponse> response) {
+                loadingDialog.dismiss();
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(requireContext(), "Foto eliminada exitosamente", Toast.LENGTH_SHORT).show();
+
+                    // Mostrar imagen por defecto
+                    imageProfilePhoto.setImageResource(android.R.drawable.ic_menu_camera);
+
+                    // Recargar el perfil
+                    loadUserProfile();
+                } else {
+                    Log.e(TAG, "Error al eliminar foto: " + response.code());
+                    Toast.makeText(requireContext(), "Error al eliminar la foto", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<DeletePhotoResponse> call, Throwable t) {
+                loadingDialog.dismiss();
+                Log.e(TAG, "Error de conexión: " + t.getMessage());
+                Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadProfilePhoto(String photoUrl) {
+        if (photoUrl != null && !photoUrl.isEmpty()) {
+            Glide.with(this)
+                    .load(photoUrl)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
+                    .placeholder(android.R.drawable.ic_menu_camera)
+                    .error(android.R.drawable.ic_menu_camera)
+                    .into(imageProfilePhoto);
+        } else {
+            imageProfilePhoto.setImageResource(android.R.drawable.ic_menu_camera);
+        }
     }
 
     private void loadUserProfile() {
@@ -213,6 +459,9 @@ public class ProfileFragment extends Fragment {
 
     private void displayProfileData() {
         if (currentProfile == null) return;
+
+        // Cargar foto de perfil
+        loadProfilePhoto(currentProfile.getPhotoUrl());
 
         String email = sessionManager.getEmail();
         String profileType = currentProfileType; // Usar el profileType guardado del nivel superior

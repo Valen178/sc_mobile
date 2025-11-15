@@ -89,7 +89,7 @@ public class ProfileFormActivity extends AppCompatActivity {
             token = sessionManager.getToken();
             userId = sessionManager.getUserId();
             email = sessionManager.getEmail();
-
+            
             // Intentar obtener profileType del intent primero (más confiable), si no, de la sesión
             profileType = getIntent().getStringExtra("profileType");
             if (profileType == null) {

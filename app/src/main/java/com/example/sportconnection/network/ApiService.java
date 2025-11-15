@@ -11,15 +11,21 @@ import com.example.sportconnection.model.UpdateProfileRequest;
 import com.example.sportconnection.model.Sport;
 import com.example.sportconnection.model.Location;
 import com.example.sportconnection.model.GoogleSignInRequest;
+import com.example.sportconnection.model.UploadPhotoResponse;
+import com.example.sportconnection.model.DeletePhotoResponse;
 
 import java.util.List;
 
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
+import retrofit2.http.Part;
 
 public interface ApiService {
 
@@ -58,5 +64,18 @@ public interface ApiService {
 
     @GET("/lookup/locations")
     Call<List<Location>> getLocations();
+
+    // Endpoints de foto de perfil
+    @Multipart
+    @POST("/profile-photo/upload")
+    Call<UploadPhotoResponse> uploadProfilePhoto(
+            @Header("Authorization") String token,
+            @Part MultipartBody.Part photo
+    );
+
+    @DELETE("/profile-photo/delete")
+    Call<DeletePhotoResponse> deleteProfilePhoto(
+            @Header("Authorization") String token
+    );
 }
 
