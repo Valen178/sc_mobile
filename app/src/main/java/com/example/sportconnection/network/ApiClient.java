@@ -41,5 +41,10 @@ public class ApiClient {
         retrofit = null;
         // Recrear con la nueva URL
     }
+
+    // Obtener la instancia de ApiService
+    public static ApiService getApiService() {
+        return getClient().create(ApiService.class);
+    }
 }
 

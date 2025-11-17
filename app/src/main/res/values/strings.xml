@@ -1,4 +1,19 @@
 <resources>
     <string name="app_name">SportConnection</string>
     <string name="default_web_client_id">353463807763-tku1j31jtdti65g1j3urcl3gg99mufc6.apps.googleusercontent.com</string>
+
+    <!-- Posts -->
+    <string name="posts_title">Publicaciones</string>
+    <string name="all_posts_tab">Todos los posts</string>
+    <string name="my_posts_tab">Mis posts</string>
+    <string name="create_post">Crear publicación</string>
+    <string name="new_post">Nueva publicación</string>
+    <string name="post_hint">¿Qué está pasando?</string>
+    <string name="post_url_hint">URL (opcional)</string>
+    <string name="publish">Publicar</string>
+    <string name="no_posts">No hay publicaciones</string>
+    <string name="no_my_posts">No tienes publicaciones</string>
+    <string name="post_created">Publicación creada exitosamente</string>
+    <string name="post_deleted">Publicación eliminada</string>
+    <string name="delete_post">Eliminar publicación</string>
 </resources>

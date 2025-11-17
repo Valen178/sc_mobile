@@ -51,6 +51,9 @@ dependencies {
     // Glide para cargar imágenes
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
+    // ViewPager2 para las pestañas
+    implementation("androidx.viewpager2:viewpager2:1.1.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

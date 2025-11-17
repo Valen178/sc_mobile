@@ -13,6 +13,10 @@ import com.example.sportconnection.model.Location;
 import com.example.sportconnection.model.GoogleSignInRequest;
 import com.example.sportconnection.model.UploadPhotoResponse;
 import com.example.sportconnection.model.DeletePhotoResponse;
+import com.example.sportconnection.model.Post;
+import com.example.sportconnection.model.CreatePostRequest;
+import com.example.sportconnection.model.CreatePostResponse;
+import com.example.sportconnection.model.MyPostsResponse;
 
 import java.util.List;
 
@@ -52,6 +56,12 @@ public interface ApiService {
             @Header("Authorization") String token
     );
 
+    @GET("/profile/{userId}")
+    Call<GetProfileResponse> getUserProfile(
+            @Header("Authorization") String token,
+            @retrofit2.http.Path("userId") int userId
+    );
+
     @PUT("/profile/me")
     Call<ProfileResponse> updateProfile(
             @Header("Authorization") String token,
@@ -76,6 +86,27 @@ public interface ApiService {
     @DELETE("/profile-photo/delete")
     Call<DeletePhotoResponse> deleteProfilePhoto(
             @Header("Authorization") String token
+    );
+
+    // Endpoints de publicaciones
+    @POST("/posts")
+    Call<CreatePostResponse> createPost(
+            @Header("Authorization") String token,
+            @Body CreatePostRequest request
+    );
+
+    @GET("/posts")
+    Call<List<Post>> getAllPosts();
+
+    @GET("/posts/my-posts")
+    Call<MyPostsResponse> getMyPosts(
+            @Header("Authorization") String token
+    );
+
+    @DELETE("/posts/{id}")
+    Call<Void> deletePost(
+            @Header("Authorization") String token,
+            @retrofit2.http.Path("id") int postId
     );
 }
 
