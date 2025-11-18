@@ -25,4 +25,3 @@ public class CreatePostResponse {
         this.post = post;
     }
 }
-

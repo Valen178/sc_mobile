@@ -296,7 +296,7 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
             // Si el userId es el del usuario actual, cargar con /profile/me
             if (userId == currentUserId) {
                 android.util.Log.d("PostsListFragment", "Usuario " + userId + " es el usuario actual, usando /profile/me");
-
+                
                 authRepository.getProfile(token, new Callback<GetProfileResponse>() {
                     @Override
                     public void onResponse(Call<GetProfileResponse> call, Response<GetProfileResponse> response) {
@@ -305,7 +305,7 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
                             GetProfileResponse.ProfileData profileData = profileResponse.getProfile();
 
                             if (profileData != null) {
-                                android.util.Log.d("PostsListFragment", "Perfil propio cargado - Name: " + profileData.getName() +
+                                android.util.Log.d("PostsListFragment", "Perfil propio cargado - Name: " + profileData.getName() + 
                                     ", PhotoURL: " + profileData.getPhotoUrl());
                                 profilesCache.put(userId, profileData);
                             } else {
@@ -335,7 +335,7 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
                 });
                 continue; // Saltar al siguiente userId
             }
-
+            
             // Para otros usuarios, usar /profile/{userId}
             Call<GetProfileResponse> call = ApiClient.getApiService()
                     .getUserProfile("Bearer " + token, userId);

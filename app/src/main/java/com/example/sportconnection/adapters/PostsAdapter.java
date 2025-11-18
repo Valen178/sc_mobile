@@ -109,7 +109,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                 // Mostrar icono por defecto
                 userAvatar.setImageResource(R.drawable.ic_profile);
             }
-
+            
             // Configurar nombre de usuario
             if (post.getUser() != null) {
                 userName.setText(post.getUser().getFullName());
