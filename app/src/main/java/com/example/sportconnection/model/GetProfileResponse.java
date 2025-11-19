@@ -3,64 +3,59 @@ package com.example.sportconnection.model;
 import com.google.gson.annotations.SerializedName;
 
 public class GetProfileResponse {
-    private UserData user;
+    @SerializedName("user_id")
+    private int userId;
 
-    @SerializedName("profileType")
+    @SerializedName("profile_type")
     private String profileType;
 
     private ProfileData profile;
 
-    public UserData getUser() {
-        return user;
-    }
+    private Relationship relationship;
 
-    public void setUser(UserData user) {
-        this.user = user;
+    @SerializedName("limited_view")
+    private boolean limitedView;
+
+    public int getUserId() {
+        return userId;
     }
 
     public String getProfileType() {
         return profileType;
     }
 
-    public void setProfileType(String profileType) {
-        this.profileType = profileType;
-    }
-
     public ProfileData getProfile() {
         return profile;
     }
 
-    public void setProfile(ProfileData profile) {
-        this.profile = profile;
+    public Relationship getRelationship() {
+        return relationship;
     }
 
-    public static class UserData {
-        private int id;
-        private String email;
-        private String role;
+    public boolean isLimitedView() {
+        return limitedView;
+    }
 
-        public int getId() {
-            return id;
+    public static class Relationship {
+        @SerializedName("has_interaction")
+        private boolean hasInteraction;
+
+        @SerializedName("has_match")
+        private boolean hasMatch;
+
+        @SerializedName("can_view_full_profile")
+        private boolean canViewFullProfile;
+
+        public boolean isHasInteraction() {
+            return hasInteraction;
         }
 
-        public void setId(int id) {
-            this.id = id;
+        public boolean isHasMatch() {
+            return hasMatch;
         }
 
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        public String getRole() {
-            return role;
-        }
-
-        public void setRole(String role) {
-            this.role = role;
+        public boolean isCanViewFullProfile() {
+            return canViewFullProfile;
         }
     }
 
@@ -107,150 +102,131 @@ public class GetProfileResponse {
         @SerializedName("created_at")
         private String createdAt;
 
-        // Getters y Setters
+        // Objetos relacionados
+        private Sport sport;
+        private Location location;
+
+        // Getters
         public int getId() {
             return id;
-        }
-
-        public void setId(int id) {
-            this.id = id;
         }
 
         public int getUserId() {
             return userId;
         }
 
-        public void setUserId(int userId) {
-            this.userId = userId;
-        }
-
         public String getProfileType() {
             return profileType;
-        }
-
-        public void setProfileType(String profileType) {
-            this.profileType = profileType;
         }
 
         public String getName() {
             return name;
         }
 
-        public void setName(String name) {
-            this.name = name;
-        }
-
         public String getLastName() {
             return lastName;
-        }
-
-        public void setLastName(String lastName) {
-            this.lastName = lastName;
         }
 
         public String getDescription() {
             return description;
         }
 
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
         public Integer getLocationId() {
             return locationId;
-        }
-
-        public void setLocationId(Integer locationId) {
-            this.locationId = locationId;
         }
 
         public Integer getSportId() {
             return sportId;
         }
 
-        public void setSportId(Integer sportId) {
-            this.sportId = sportId;
-        }
-
         public String getPhoneNumber() {
             return phoneNumber;
-        }
-
-        public void setPhoneNumber(String phoneNumber) {
-            this.phoneNumber = phoneNumber;
         }
 
         public String getIgUser() {
             return igUser;
         }
 
-        public void setIgUser(String igUser) {
-            this.igUser = igUser;
-        }
-
         public String getxUser() {
             return xUser;
-        }
-
-        public void setxUser(String xUser) {
-            this.xUser = xUser;
         }
 
         public String getBirthdate() {
             return birthdate;
         }
 
-        public void setBirthdate(String birthdate) {
-            this.birthdate = birthdate;
-        }
-
         public String getHeight() {
             return height;
-        }
-
-        public void setHeight(String height) {
-            this.height = height;
         }
 
         public String getWeight() {
             return weight;
         }
 
-        public void setWeight(String weight) {
-            this.weight = weight;
-        }
-
         public String getAgency() {
             return agency;
-        }
-
-        public void setAgency(String agency) {
-            this.agency = agency;
         }
 
         public String getJob() {
             return job;
         }
 
-        public void setJob(String job) {
-            this.job = job;
-        }
-
         public String getPhotoUrl() {
             return photoUrl;
-        }
-
-        public void setPhotoUrl(String photoUrl) {
-            this.photoUrl = photoUrl;
         }
 
         public String getCreatedAt() {
             return createdAt;
         }
 
-        public void setCreatedAt(String createdAt) {
-            this.createdAt = createdAt;
+        public Sport getSport() {
+            return sport;
         }
+
+        public Location getLocation() {
+            return location;
+        }
+    }
+
+    // Métodos auxiliares para acceder a datos del perfil más fácilmente
+    public String getName() {
+        return profile != null ? profile.getName() : null;
+    }
+
+    public String getJob() {
+        return profile != null ? profile.getJob() : null;
+    }
+
+    public String getDescription() {
+        return profile != null ? profile.getDescription() : null;
+    }
+
+    public String getPhotoUrl() {
+        return profile != null ? profile.getPhotoUrl() : null;
+    }
+
+    public String getPhoneNumber() {
+        return profile != null ? profile.getPhoneNumber() : null;
+    }
+
+    public String getIgUser() {
+        return profile != null ? profile.getIgUser() : null;
+    }
+
+    public String getXUser() {
+        return profile != null ? profile.getxUser() : null;
+    }
+
+    public Location getLocation() {
+        return profile != null ? profile.getLocation() : null;
+    }
+
+    public Sport getSport() {
+        return profile != null ? profile.getSport() : null;
+    }
+
+    public boolean isHasMatch() {
+        return relationship != null && relationship.isHasMatch();
     }
 }
 

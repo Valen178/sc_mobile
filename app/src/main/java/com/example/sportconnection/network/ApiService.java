@@ -17,6 +17,10 @@ import com.example.sportconnection.model.Post;
 import com.example.sportconnection.model.CreatePostRequest;
 import com.example.sportconnection.model.CreatePostResponse;
 import com.example.sportconnection.model.MyPostsResponse;
+import com.example.sportconnection.model.DiscoverResponse;
+import com.example.sportconnection.model.SwipeRequest;
+import com.example.sportconnection.model.SwipeResponse;
+import com.example.sportconnection.model.MatchesResponse;
 
 import java.util.List;
 
@@ -107,6 +111,25 @@ public interface ApiService {
     Call<Void> deletePost(
             @Header("Authorization") String token,
             @retrofit2.http.Path("id") int postId
+    );
+
+    // Endpoints de swipe y matches
+    @GET("/swipe/discover")
+    Call<DiscoverResponse> getDiscoverUsers(
+            @Header("Authorization") String token,
+            @retrofit2.http.Query("profile_type_filter") String profileTypeFilter,
+            @retrofit2.http.Query("limit") Integer limit
+    );
+
+    @POST("/swipe")
+    Call<SwipeResponse> swipe(
+            @Header("Authorization") String token,
+            @Body SwipeRequest request
+    );
+
+    @GET("/swipe/matches")
+    Call<MatchesResponse> getMatches(
+            @Header("Authorization") String token
     );
 }
 
