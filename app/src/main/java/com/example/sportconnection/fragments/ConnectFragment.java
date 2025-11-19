@@ -21,6 +21,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.sportconnection.HomeActivity;
 import com.example.sportconnection.R;
 import com.example.sportconnection.model.DiscoverResponse;
 import com.example.sportconnection.model.SwipeRequest;
@@ -28,6 +29,7 @@ import com.example.sportconnection.model.SwipeResponse;
 import com.example.sportconnection.model.SwipeUser;
 import com.example.sportconnection.network.ApiClient;
 import com.example.sportconnection.network.ApiService;
+import com.example.sportconnection.utils.Logger;
 import com.example.sportconnection.utils.SwipeCardHelper;
 import com.example.sportconnection.utils.SessionManager;
 
@@ -61,21 +63,37 @@ public class ConnectFragment extends Fragment {
     // API
     private ApiService apiService;
     private SessionManager sessionManager;
-
+    
     // Current card view
     private View currentCardView;
     private SwipeCardHelper currentSwipeHelper;
 
+    // API Calls tracking
+    private Call<DiscoverResponse> currentDiscoverCall;
+    private Call<SwipeResponse> currentSwipeCall;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Logger.d(TAG, "onCreateView - Iniciando");
         View view = inflater.inflate(R.layout.fragment_connect, container, false);
 
         initializeViews(view);
         initializeData();
         setupListeners();
 
+        Logger.d(TAG, "onCreateView - Completado");
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Logger.d(TAG, "onResume - Fragmento visible");
+        // Notificar que el fragmento está listo
+        if (getActivity() instanceof HomeActivity) {
+            ((HomeActivity) getActivity()).setFragmentLoading(false);
+        }
     }
 
     private void initializeViews(View view) {
@@ -95,7 +113,7 @@ public class ConnectFragment extends Fragment {
         sessionManager = new SessionManager(requireContext());
         token = sessionManager.getToken();
         userProfileType = sessionManager.getProfileType();
-
+        
         if (token == null) {
             token = "";
         }
@@ -319,24 +337,24 @@ public class ConnectFragment extends Fragment {
     private void performSwipe(int swipedUserId, String action) {
         SwipeRequest request = new SwipeRequest(swipedUserId, action);
 
-        Call<SwipeResponse> call = apiService.swipe("Bearer " + token, request);
-        call.enqueue(new Callback<SwipeResponse>() {
+        currentSwipeCall = apiService.swipe("Bearer " + token, request);
+        currentSwipeCall.enqueue(new Callback<SwipeResponse>() {
             @Override
             public void onResponse(Call<SwipeResponse> call, Response<SwipeResponse> response) {
+                if (!isAdded() || getContext() == null) return;
+
                 if (response.isSuccessful() && response.body() != null) {
                     SwipeResponse swipeResponse = response.body();
 
                     if (swipeResponse.isMatch()) {
-                        Toast.makeText(requireContext(), "¡Match! " + swipeResponse.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), "¡Match! " + swipeResponse.getMessage(), Toast.LENGTH_LONG).show();
                     }
-                } else {
-                    Log.e(TAG, "Error performing swipe: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<SwipeResponse> call, Throwable t) {
-                Log.e(TAG, "Error performing swipe", t);
+                // Silenciar errores si el fragmento ya no está adjunto
             }
         });
     }
@@ -355,6 +373,26 @@ public class ConnectFragment extends Fragment {
     private void hideEmptyState() {
         emptyStateContainer.setVisibility(View.GONE);
         buttonContainer.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        // Cancelar llamadas API pendientes
+        if (currentDiscoverCall != null && !currentDiscoverCall.isCanceled()) {
+            currentDiscoverCall.cancel();
+        }
+        if (currentSwipeCall != null && !currentSwipeCall.isCanceled()) {
+            currentSwipeCall.cancel();
+        }
+
+        // Limpiar vistas
+        if (cardContainer != null) {
+            cardContainer.removeAllViews();
+        }
+        currentCardView = null;
+        currentSwipeHelper = null;
     }
 }
 

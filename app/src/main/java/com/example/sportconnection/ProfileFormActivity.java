@@ -94,12 +94,7 @@ public class ProfileFormActivity extends AppCompatActivity {
             profileType = getIntent().getStringExtra("profileType");
             if (profileType == null) {
                 profileType = sessionManager.getProfileType();
-                Log.d(TAG, "onCreate: ProfileType obtenido de sesión: " + profileType);
-            } else {
-                Log.d(TAG, "onCreate: ProfileType obtenido de intent: " + profileType);
             }
-
-            Log.d(TAG, "onCreate: Modo EDICIÓN - profileType=" + profileType);
         } else {
             // Modo creación - obtener desde intent
             email = getIntent().getStringExtra("email");
@@ -107,8 +102,6 @@ public class ProfileFormActivity extends AppCompatActivity {
             profileType = getIntent().getStringExtra("profileType");
             token = getIntent().getStringExtra("token");
             userId = getIntent().getIntExtra("userId", -1);
-
-            Log.d(TAG, "onCreate: Modo CREACIÓN - profileType=" + profileType + ", userId=" + userId);
         }
 
         // Inicializar vistas
@@ -259,7 +252,6 @@ public class ProfileFormActivity extends AppCompatActivity {
     }
 
     private void loadSportsAndLocations() {
-        Log.d(TAG, "loadSportsAndLocations: Iniciando carga de datos");
         loadingDialog.show("Cargando datos...");
 
         // Cargar deportes
@@ -268,11 +260,9 @@ public class ProfileFormActivity extends AppCompatActivity {
             public void onResponse(Call<List<Sport>> call, Response<List<Sport>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     sportList = response.body();
-                    Log.d(TAG, "Sports cargados: " + sportList.size());
                     setupSportSpinner();
                     checkIfDataLoaded();
                 } else {
-                    Log.e(TAG, "Error al cargar sports: " + response.code());
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -286,7 +276,6 @@ public class ProfileFormActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<Sport>> call, Throwable t) {
-                Log.e(TAG, "Failure al cargar sports: " + t.getMessage());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -304,11 +293,9 @@ public class ProfileFormActivity extends AppCompatActivity {
             public void onResponse(Call<List<Location>> call, Response<List<Location>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     locationList = response.body();
-                    Log.d(TAG, "Locations cargadas: " + locationList.size());
                     setupLocationSpinner();
                     checkIfDataLoaded();
                 } else {
-                    Log.e(TAG, "Error al cargar locations: " + response.code());
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -322,7 +309,6 @@ public class ProfileFormActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<Location>> call, Throwable t) {
-                Log.e(TAG, "Failure al cargar locations: " + t.getMessage());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -374,8 +360,6 @@ public class ProfileFormActivity extends AppCompatActivity {
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                         selectedLocationId = locationList.get(position).getId();
-                        Log.d(TAG, "Location seleccionada: " + locationList.get(position).toString() +
-                            " (ID: " + selectedLocationId + ")");
                     }
 
                     @Override
@@ -482,9 +466,6 @@ public class ProfileFormActivity extends AppCompatActivity {
                 profileRequest.setLocationId(selectedLocationId);
                 profileRequest.setSportId(selectedSportId);
 
-                Log.d(TAG, "ProfileRequest: profileType=" + profileType.toLowerCase() +
-                    ", locationId=" + selectedLocationId + ", sportId=" + selectedSportId);
-
                 // Campos específicos según el tipo de perfil
                 if (profileType.equalsIgnoreCase("athlete")) {
                     profileRequest.setLastName(editTextLastName.getText().toString().trim());
@@ -492,8 +473,6 @@ public class ProfileFormActivity extends AppCompatActivity {
                     profileRequest.setBirthdate(selectedBirthdate);
                     profileRequest.setHeight(editTextHeight.getText().toString().trim());
                     profileRequest.setWeight(editTextWeight.getText().toString().trim());
-
-                    Log.d(TAG, "Athlete profile - Birthdate ISO: " + selectedBirthdate);
                 } else if (profileType.equalsIgnoreCase("agent")) {
                     profileRequest.setLastName(editTextLastName.getText().toString().trim());
                     profileRequest.setAgency(editTextAgency.getText().toString().trim());
@@ -513,8 +492,6 @@ public class ProfileFormActivity extends AppCompatActivity {
 
                                 if (response.isSuccessful() && response.body() != null) {
                                     // Si la respuesta HTTP es exitosa (200-299), el perfil se creó correctamente
-                                    Log.d(TAG, "Perfil creado exitosamente - Status: " + response.code());
-
                                     // Guardar la sesión en segundo plano
                                     threadManager.executeInBackground(new Runnable() {
                                         @Override

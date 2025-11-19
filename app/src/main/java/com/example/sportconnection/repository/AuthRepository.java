@@ -1,7 +1,5 @@
 package com.example.sportconnection.repository;
 
-import android.util.Log;
-
 import com.example.sportconnection.model.LoginRequest;
 import com.example.sportconnection.model.LoginResponse;
 import com.example.sportconnection.model.SignupRequest;
@@ -25,7 +23,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 
 public class AuthRepository {
-    private static final String TAG = "AuthRepository";
     private final ApiService apiService;
 
     public AuthRepository() {
@@ -36,8 +33,6 @@ public class AuthRepository {
     public void signup(String email, String password, Callback<SignupResponse> callback) {
         SignupRequest request = new SignupRequest(email, password);
         Call<SignupResponse> call = apiService.signup(request);
-
-        Log.d(TAG, "Registrando usuario: " + email);
         call.enqueue(callback);
     }
 
@@ -45,8 +40,6 @@ public class AuthRepository {
     public void login(String email, String password, Callback<LoginResponse> callback) {
         LoginRequest request = new LoginRequest(email, password);
         Call<LoginResponse> call = apiService.login(request);
-
-        Log.d(TAG, "Iniciando sesión: " + email);
         call.enqueue(callback);
     }
 
@@ -54,8 +47,6 @@ public class AuthRepository {
     public void googleSignIn(String idToken, Callback<LoginResponse> callback) {
         GoogleSignInRequest request = new GoogleSignInRequest(idToken);
         Call<LoginResponse> call = apiService.googleSignIn(request);
-
-        Log.d(TAG, "Iniciando sesión con Google (unificado)");
         call.enqueue(callback);
     }
 
@@ -63,8 +54,6 @@ public class AuthRepository {
     public void createProfile(String token, ProfileRequest request, Callback<ProfileResponse> callback) {
         String authHeader = "Bearer " + token;
         Call<ProfileResponse> call = apiService.createProfile(authHeader, request);
-
-        Log.d(TAG, "Creando perfil: " + request.getProfileType());
         call.enqueue(callback);
     }
 
@@ -72,8 +61,6 @@ public class AuthRepository {
     public void getProfile(String token, Callback<GetProfileResponse> callback) {
         String authHeader = "Bearer " + token;
         Call<GetProfileResponse> call = apiService.getProfile(authHeader);
-
-        Log.d(TAG, "Obteniendo perfil del usuario autenticado");
         call.enqueue(callback);
     }
 
@@ -81,8 +68,6 @@ public class AuthRepository {
     public void updateProfile(String token, UpdateProfileRequest request, Callback<ProfileResponse> callback) {
         String authHeader = "Bearer " + token;
         Call<ProfileResponse> call = apiService.updateProfile(authHeader, request);
-
-        Log.d(TAG, "Actualizando perfil del usuario autenticado");
         call.enqueue(callback);
     }
 
@@ -97,8 +82,6 @@ public class AuthRepository {
         MultipartBody.Part photoPart = MultipartBody.Part.createFormData("photo", photoFile.getName(), requestFile);
 
         Call<UploadPhotoResponse> call = apiService.uploadProfilePhoto(authHeader, photoPart);
-
-        Log.d(TAG, "Subiendo foto de perfil: " + photoFile.getName());
         call.enqueue(callback);
     }
 
@@ -106,8 +89,6 @@ public class AuthRepository {
     public void deleteProfilePhoto(String token, Callback<DeletePhotoResponse> callback) {
         String authHeader = "Bearer " + token;
         Call<DeletePhotoResponse> call = apiService.deleteProfilePhoto(authHeader);
-
-        Log.d(TAG, "Eliminando foto de perfil");
         call.enqueue(callback);
     }
 }

@@ -2,21 +2,33 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:layout_height="match_parent">
 
     <!-- Título -->
     <TextView
         android:id="@+id/titleConnections"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="16dp"
         android:text="Conexiones"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="#212121"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnSubscribeConnections"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnSubscribeConnections"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="16dp"
+        android:text="Suscribirse"
+        android:textSize="12sp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Contador de matches -->
@@ -25,10 +37,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:layout_marginStart="16dp"
         android:text="0 conexiones"
         android:textSize="14sp"
-        android:textColor="#757575"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textColor="#CCCCCC"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/titleConnections" />
 
@@ -64,7 +76,7 @@
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:src="@android:drawable/ic_menu_myplaces"
-            app:tint="#BDBDBD"
+            app:tint="#CCCCCC"
             android:contentDescription="Sin conexiones" />
 
         <TextView
@@ -72,7 +84,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Aún no tienes conexiones"
-            android:textColor="#757575"
+            android:textColor="#CCCCCC"
             android:textSize="16sp"
             android:textAlignment="center" />
 
@@ -81,7 +93,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="Empieza a dar likes para hacer matches"
-            android:textColor="#BDBDBD"
+            android:textColor="#999999"
             android:textSize="14sp"
             android:textAlignment="center" />
     </LinearLayout>

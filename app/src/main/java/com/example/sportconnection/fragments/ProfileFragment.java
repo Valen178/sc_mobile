@@ -26,6 +26,7 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.sportconnection.HomeActivity;
 import com.example.sportconnection.MainActivity;
 import com.example.sportconnection.ProfileFormActivity;
 import com.example.sportconnection.R;
@@ -37,6 +38,7 @@ import com.example.sportconnection.model.UploadPhotoResponse;
 import com.example.sportconnection.repository.AuthRepository;
 import com.example.sportconnection.repository.LookupRepository;
 import com.example.sportconnection.utils.LoadingDialog;
+import com.example.sportconnection.utils.Logger;
 import com.example.sportconnection.utils.SessionManager;
 import com.example.sportconnection.utils.ThreadManager;
 
@@ -84,6 +86,13 @@ public class ProfileFragment extends Fragment {
     private List<Sport> sportList;
     private List<Location> locationList;
 
+    // API Calls tracking
+    private Call<GetProfileResponse> currentProfileCall;
+    private Call<UploadPhotoResponse> currentUploadCall;
+    private Call<DeletePhotoResponse> currentDeleteCall;
+    private Call<List<Sport>> currentSportsCall;
+    private Call<List<Location>> currentLocationsCall;
+
     // Launcher para seleccionar imagen
     private ActivityResultLauncher<Intent> pickImageLauncher;
     // Launcher para permisos
@@ -92,6 +101,7 @@ public class ProfileFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Logger.d(TAG, "onCreateView - Iniciando");
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         // Inicializar launchers
@@ -122,6 +132,7 @@ public class ProfileFragment extends Fragment {
         sessionManager = new SessionManager(requireContext());
         authRepository = new AuthRepository();
         lookupRepository = new LookupRepository();
+        Logger.d(TAG, "onCreateView - Vistas y utilidades inicializadas");
         loadingDialog = new LoadingDialog(requireContext());
         threadManager = ThreadManager.getInstance();
 
@@ -156,6 +167,7 @@ public class ProfileFragment extends Fragment {
             }
         });
 
+        Logger.d(TAG, "onCreateView - Completado");
         return view;
     }
 
@@ -291,7 +303,6 @@ public class ProfileFragment extends Fragment {
                     // Recargar el perfil completo
                     loadUserProfile();
                 } else {
-                    Log.e(TAG, "Error al subir foto: " + response.code());
                     Toast.makeText(requireContext(), "Error al subir la foto", Toast.LENGTH_SHORT).show();
                 }
 
@@ -304,7 +315,6 @@ public class ProfileFragment extends Fragment {
             @Override
             public void onFailure(Call<UploadPhotoResponse> call, Throwable t) {
                 loadingDialog.dismiss();
-                Log.e(TAG, "Error de conexión: " + t.getMessage());
                 Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
 
                 // Eliminar el archivo temporal
@@ -339,7 +349,6 @@ public class ProfileFragment extends Fragment {
                     // Recargar el perfil
                     loadUserProfile();
                 } else {
-                    Log.e(TAG, "Error al eliminar foto: " + response.code());
                     Toast.makeText(requireContext(), "Error al eliminar la foto", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -347,7 +356,6 @@ public class ProfileFragment extends Fragment {
             @Override
             public void onFailure(Call<DeletePhotoResponse> call, Throwable t) {
                 loadingDialog.dismiss();
-                Log.e(TAG, "Error de conexión: " + t.getMessage());
                 Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
             }
         });
@@ -379,8 +387,6 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
-        Log.d(TAG, "Cargando perfil para userId: " + userId);
-
         // Cargar sports y locations primero
         loadLookupsData(new Runnable() {
             @Override
@@ -409,7 +415,6 @@ public class ProfileFragment extends Fragment {
                     @Override
                     public void onFailure(Call<GetProfileResponse> call, Throwable t) {
                         loadingDialog.dismiss();
-                        Log.e(TAG, "Error de conexión: " + t.getMessage());
                         Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -430,7 +435,7 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void onFailure(Call<List<Sport>> call, Throwable t) {
-                Log.e(TAG, "Error al cargar sports: " + t.getMessage());
+                // Error al cargar sports
             }
         });
 
@@ -580,16 +585,20 @@ public class ProfileFragment extends Fragment {
         Intent intent = new Intent(requireActivity(), ProfileFormActivity.class);
         intent.putExtra("isEditMode", true);
         intent.putExtra("profileType", currentProfileType);
-        Log.d(TAG, "Abriendo formulario de edición con profileType: " + currentProfileType);
         startActivity(intent);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        Logger.d(TAG, "onResume - Perfil visible");
         // Recargar el perfil cuando volvemos a este fragment
         if (currentProfile != null) {
             loadUserProfile();
+        }
+        // Notificar que el fragmento está listo
+        if (getActivity() instanceof HomeActivity) {
+            ((HomeActivity) getActivity()).setFragmentLoading(false);
         }
     }
 
@@ -629,6 +638,24 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+
+        // Cancelar llamadas API pendientes
+        if (currentProfileCall != null && !currentProfileCall.isCanceled()) {
+            currentProfileCall.cancel();
+        }
+        if (currentUploadCall != null && !currentUploadCall.isCanceled()) {
+            currentUploadCall.cancel();
+        }
+        if (currentDeleteCall != null && !currentDeleteCall.isCanceled()) {
+            currentDeleteCall.cancel();
+        }
+        if (currentSportsCall != null && !currentSportsCall.isCanceled()) {
+            currentSportsCall.cancel();
+        }
+        if (currentLocationsCall != null && !currentLocationsCall.isCanceled()) {
+            currentLocationsCall.cancel();
+        }
+
         // Cerrar el diálogo si está abierto
         if (loadingDialog != null && loadingDialog.isShowing()) {
             loadingDialog.dismiss();

@@ -194,7 +194,6 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void registerWithGoogle(final String idToken) {
-        android.util.Log.d("RegisterActivity", "registerWithGoogle called");
         loadingDialog.show("Registrando con Google...");
         buttonGoogleSignUp.setEnabled(false);
 

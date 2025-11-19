@@ -113,7 +113,6 @@ public class PostRepository {
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                Log.e(TAG, "Error: " + t.getMessage());
                 callback.onError("Error de conexión: " + t.getMessage());
             }
         });

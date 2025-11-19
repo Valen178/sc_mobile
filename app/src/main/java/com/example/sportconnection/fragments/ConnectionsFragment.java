@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.sportconnection.HomeActivity;
 import com.example.sportconnection.R;
 import com.example.sportconnection.ViewProfileActivity;
 import com.example.sportconnection.adapters.MatchesAdapter;
@@ -24,6 +25,7 @@ import com.example.sportconnection.model.Match;
 import com.example.sportconnection.model.MatchesResponse;
 import com.example.sportconnection.network.ApiClient;
 import com.example.sportconnection.network.ApiService;
+import com.example.sportconnection.utils.Logger;
 import com.example.sportconnection.utils.SessionManager;
 
 import java.util.ArrayList;
@@ -55,20 +57,28 @@ public class ConnectionsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Logger.d(TAG, "onCreateView - Iniciando");
         View view = inflater.inflate(R.layout.fragment_connections, container, false);
 
         initializeViews(view);
         initializeData();
         loadMatches();
 
+        Logger.d(TAG, "onCreateView - Completado");
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        Logger.d(TAG, "onResume - Recargando matches");
         // Recargar matches cuando volvemos al fragmento
         loadMatches();
+
+        // Notificar que el fragmento está listo
+        if (getActivity() instanceof HomeActivity) {
+            ((HomeActivity) getActivity()).setFragmentLoading(false);
+        }
     }
 
     private void initializeViews(View view) {
@@ -93,8 +103,10 @@ public class ConnectionsFragment extends Fragment {
         matches = new ArrayList<>();
 
         adapter = new MatchesAdapter(requireContext(), matches, match -> {
+            if (!isAdded() || getContext() == null) return;
+
             // Al hacer click en un match, abrir el perfil completo
-            Intent intent = new Intent(requireContext(), ViewProfileActivity.class);
+            Intent intent = new Intent(getContext(), ViewProfileActivity.class);
             intent.putExtra("user_id", match.getOtherUser().getId());
             startActivity(intent);
         });
@@ -128,7 +140,6 @@ public class ConnectionsFragment extends Fragment {
                         hideEmptyState();
                     }
                 } else {
-                    Log.e(TAG, "Error loading matches: " + response.code());
                     Toast.makeText(requireContext(), "Error al cargar conexiones", Toast.LENGTH_SHORT).show();
                     showEmptyState();
                 }
@@ -137,7 +148,6 @@ public class ConnectionsFragment extends Fragment {
             @Override
             public void onFailure(Call<MatchesResponse> call, Throwable t) {
                 showLoading(false);
-                Log.e(TAG, "Error loading matches", t);
                 Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
                 showEmptyState();
             }
