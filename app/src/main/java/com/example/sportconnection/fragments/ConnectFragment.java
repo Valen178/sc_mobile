@@ -29,7 +29,7 @@ import com.example.sportconnection.model.SwipeResponse;
 import com.example.sportconnection.model.SwipeUser;
 import com.example.sportconnection.network.ApiClient;
 import com.example.sportconnection.network.ApiService;
-import com.example.sportconnection.utils.Logger;
+import com.example.sportconnection.utils.LoadingDialog;
 import com.example.sportconnection.utils.SwipeCardHelper;
 import com.example.sportconnection.utils.SessionManager;
 
@@ -63,7 +63,8 @@ public class ConnectFragment extends Fragment {
     // API
     private ApiService apiService;
     private SessionManager sessionManager;
-    
+    private LoadingDialog loadingDialog;
+
     // Current card view
     private View currentCardView;
     private SwipeCardHelper currentSwipeHelper;
@@ -75,25 +76,19 @@ public class ConnectFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Logger.d(TAG, "onCreateView - Iniciando");
         View view = inflater.inflate(R.layout.fragment_connect, container, false);
 
         initializeViews(view);
         initializeData();
         setupListeners();
 
-        Logger.d(TAG, "onCreateView - Completado");
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Logger.d(TAG, "onResume - Fragmento visible");
-        // Notificar que el fragmento está listo
-        if (getActivity() instanceof HomeActivity) {
-            ((HomeActivity) getActivity()).setFragmentLoading(false);
-        }
+        // La notificación a HomeActivity se hace en el callback de loadUsers()
     }
 
     private void initializeViews(View view) {
@@ -113,7 +108,8 @@ public class ConnectFragment extends Fragment {
         sessionManager = new SessionManager(requireContext());
         token = sessionManager.getToken();
         userProfileType = sessionManager.getProfileType();
-        
+        loadingDialog = new LoadingDialog(requireContext());
+
         if (token == null) {
             token = "";
         }
@@ -186,7 +182,7 @@ public class ConnectFragment extends Fragment {
     }
 
     private void loadUsers() {
-        showLoading(true);
+        loadingDialog.show("Cargando usuarios...");
 
         String filter = "athlete".equals(userProfileType) ? currentFilter : null;
 
@@ -194,7 +190,7 @@ public class ConnectFragment extends Fragment {
         call.enqueue(new Callback<DiscoverResponse>() {
             @Override
             public void onResponse(Call<DiscoverResponse> call, Response<DiscoverResponse> response) {
-                showLoading(false);
+                loadingDialog.dismiss();
 
                 if (response.isSuccessful() && response.body() != null) {
                     DiscoverResponse discoverResponse = response.body();
@@ -212,14 +208,24 @@ public class ConnectFragment extends Fragment {
                     Toast.makeText(requireContext(), "Error al cargar usuarios", Toast.LENGTH_SHORT).show();
                     showEmptyState();
                 }
+
+                // Notificar que el fragmento está listo
+                if (getActivity() instanceof HomeActivity) {
+                    ((HomeActivity) getActivity()).setFragmentLoading(false);
+                }
             }
 
             @Override
             public void onFailure(Call<DiscoverResponse> call, Throwable t) {
-                showLoading(false);
+                loadingDialog.dismiss();
                 Log.e(TAG, "Error loading users", t);
                 Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
                 showEmptyState();
+
+                // Notificar que el fragmento está listo (aunque haya error)
+                if (getActivity() instanceof HomeActivity) {
+                    ((HomeActivity) getActivity()).setFragmentLoading(false);
+                }
             }
         });
     }
@@ -359,11 +365,6 @@ public class ConnectFragment extends Fragment {
         });
     }
 
-    private void showLoading(boolean show) {
-        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        buttonContainer.setVisibility(show ? View.GONE : View.VISIBLE);
-    }
-
     private void showEmptyState() {
         emptyStateContainer.setVisibility(View.VISIBLE);
         buttonContainer.setVisibility(View.GONE);
@@ -387,6 +388,11 @@ public class ConnectFragment extends Fragment {
             currentSwipeCall.cancel();
         }
 
+        // Cerrar el diálogo si está abierto
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
+
         // Limpiar vistas
         if (cardContainer != null) {
             cardContainer.removeAllViews();
@@ -395,4 +401,3 @@ public class ConnectFragment extends Fragment {
         currentSwipeHelper = null;
     }
 }
-

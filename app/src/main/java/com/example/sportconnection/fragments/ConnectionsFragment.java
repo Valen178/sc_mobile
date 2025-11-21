@@ -25,7 +25,7 @@ import com.example.sportconnection.model.Match;
 import com.example.sportconnection.model.MatchesResponse;
 import com.example.sportconnection.network.ApiClient;
 import com.example.sportconnection.network.ApiService;
-import com.example.sportconnection.utils.Logger;
+import com.example.sportconnection.utils.LoadingDialog;
 import com.example.sportconnection.utils.SessionManager;
 
 import java.util.ArrayList;
@@ -53,32 +53,26 @@ public class ConnectionsFragment extends Fragment {
     // API
     private ApiService apiService;
     private SessionManager sessionManager;
+    private LoadingDialog loadingDialog;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Logger.d(TAG, "onCreateView - Iniciando");
         View view = inflater.inflate(R.layout.fragment_connections, container, false);
 
         initializeViews(view);
         initializeData();
         loadMatches();
 
-        Logger.d(TAG, "onCreateView - Completado");
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Logger.d(TAG, "onResume - Recargando matches");
         // Recargar matches cuando volvemos al fragmento
         loadMatches();
-
-        // Notificar que el fragmento está listo
-        if (getActivity() instanceof HomeActivity) {
-            ((HomeActivity) getActivity()).setFragmentLoading(false);
-        }
+        // La notificación a HomeActivity se hace en el callback de loadMatches()
     }
 
     private void initializeViews(View view) {
@@ -94,6 +88,7 @@ public class ConnectionsFragment extends Fragment {
     private void initializeData() {
         sessionManager = new SessionManager(requireContext());
         token = sessionManager.getToken();
+        loadingDialog = new LoadingDialog(requireContext());
 
         if (token == null) {
             token = "";
@@ -115,13 +110,13 @@ public class ConnectionsFragment extends Fragment {
     }
 
     private void loadMatches() {
-        showLoading(true);
+        loadingDialog.show("Cargando conexiones...");
 
         Call<MatchesResponse> call = apiService.getMatches("Bearer " + token);
         call.enqueue(new Callback<MatchesResponse>() {
             @Override
             public void onResponse(Call<MatchesResponse> call, Response<MatchesResponse> response) {
-                showLoading(false);
+                loadingDialog.dismiss();
 
                 if (response.isSuccessful() && response.body() != null) {
                     MatchesResponse matchesResponse = response.body();
@@ -143,20 +138,25 @@ public class ConnectionsFragment extends Fragment {
                     Toast.makeText(requireContext(), "Error al cargar conexiones", Toast.LENGTH_SHORT).show();
                     showEmptyState();
                 }
+
+                // Notificar que el fragmento está listo
+                if (getActivity() instanceof HomeActivity) {
+                    ((HomeActivity) getActivity()).setFragmentLoading(false);
+                }
             }
 
             @Override
             public void onFailure(Call<MatchesResponse> call, Throwable t) {
-                showLoading(false);
+                loadingDialog.dismiss();
                 Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
                 showEmptyState();
+
+                // Notificar que el fragmento está listo (aunque haya error)
+                if (getActivity() instanceof HomeActivity) {
+                    ((HomeActivity) getActivity()).setFragmentLoading(false);
+                }
             }
         });
-    }
-
-    private void showLoading(boolean show) {
-        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
     private void showEmptyState() {
@@ -167,6 +167,16 @@ public class ConnectionsFragment extends Fragment {
     private void hideEmptyState() {
         emptyState.setVisibility(View.GONE);
         recyclerView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        // Cerrar el diálogo si está abierto
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
     }
 }
 

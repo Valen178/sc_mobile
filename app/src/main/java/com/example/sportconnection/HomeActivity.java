@@ -73,18 +73,18 @@ public class HomeActivity extends AppCompatActivity {
     private void loadFragment(Fragment fragment) {
         Logger.d(TAG, "Iniciando carga de fragmento: " + fragment.getClass().getSimpleName());
         setFragmentLoading(true);
-
+        
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         transaction.replace(R.id.fragmentContainer, fragment);
         transaction.commitNow(); // Usar commitNow para esperar a que termine
-
+        
         // Dar un pequeño delay para que el fragmento se inicialice
         bottomNavigation.postDelayed(() -> {
             setFragmentLoading(false);
             Logger.d(TAG, "Fragmento cargado: " + fragment.getClass().getSimpleName());
         }, 500);
     }
-
+    
     public void setFragmentLoading(boolean loading) {
         isFragmentLoading = loading;
         if (loadingOverlay != null) {

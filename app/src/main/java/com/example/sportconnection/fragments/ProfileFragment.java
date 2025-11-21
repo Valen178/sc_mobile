@@ -38,7 +38,6 @@ import com.example.sportconnection.model.UploadPhotoResponse;
 import com.example.sportconnection.repository.AuthRepository;
 import com.example.sportconnection.repository.LookupRepository;
 import com.example.sportconnection.utils.LoadingDialog;
-import com.example.sportconnection.utils.Logger;
 import com.example.sportconnection.utils.SessionManager;
 import com.example.sportconnection.utils.ThreadManager;
 
@@ -101,7 +100,6 @@ public class ProfileFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Logger.d(TAG, "onCreateView - Iniciando");
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         // Inicializar launchers
@@ -132,7 +130,6 @@ public class ProfileFragment extends Fragment {
         sessionManager = new SessionManager(requireContext());
         authRepository = new AuthRepository();
         lookupRepository = new LookupRepository();
-        Logger.d(TAG, "onCreateView - Vistas y utilidades inicializadas");
         loadingDialog = new LoadingDialog(requireContext());
         threadManager = ThreadManager.getInstance();
 
@@ -167,9 +164,9 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        Logger.d(TAG, "onCreateView - Completado");
         return view;
     }
+
 
     private void initializeLaunchers() {
         // Launcher para seleccionar imagen
@@ -591,7 +588,6 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Logger.d(TAG, "onResume - Perfil visible");
         // Recargar el perfil cuando volvemos a este fragment
         if (currentProfile != null) {
             loadUserProfile();

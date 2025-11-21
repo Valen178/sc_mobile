@@ -492,6 +492,7 @@ public class ProfileFormActivity extends AppCompatActivity {
 
                                 if (response.isSuccessful() && response.body() != null) {
                                     // Si la respuesta HTTP es exitosa (200-299), el perfil se creó correctamente
+
                                     // Guardar la sesión en segundo plano
                                     threadManager.executeInBackground(new Runnable() {
                                         @Override

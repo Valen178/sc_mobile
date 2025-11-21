@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.sportconnection.HomeActivity;
 import com.example.sportconnection.R;
 import com.example.sportconnection.adapters.PostsAdapter;
 import com.example.sportconnection.model.GetProfileResponse;
@@ -21,6 +22,7 @@ import com.example.sportconnection.model.Post;
 import com.example.sportconnection.network.ApiClient;
 import com.example.sportconnection.repository.AuthRepository;
 import com.example.sportconnection.repository.PostRepository;
+import com.example.sportconnection.utils.LoadingDialog;
 import com.example.sportconnection.utils.SessionManager;
 
 import java.util.List;
@@ -39,6 +41,7 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
     private PostRepository postRepository;
     private AuthRepository authRepository;
     private SessionManager sessionManager;
+    private LoadingDialog loadingDialog;
     private boolean showMyPosts;
 
     public static PostsListFragment newInstance(boolean showMyPosts) {
@@ -58,6 +61,7 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
         postRepository = new PostRepository();
         authRepository = new AuthRepository();
         sessionManager = new SessionManager(requireContext());
+        loadingDialog = new LoadingDialog(requireContext());
     }
 
     @Nullable
@@ -87,7 +91,7 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
     }
 
     private void loadPosts() {
-        showLoading(true);
+        loadingDialog.show("Cargando publicaciones...");
 
         if (showMyPosts) {
             // Cargar mis posts
@@ -122,18 +126,20 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
                                         for (Post post : posts) {
                                             post.setUser(currentUser);
                                         }
-                                        showLoading(false);
+                                        loadingDialog.dismiss();
                                         adapter.setPosts(posts);
                                         updateEmptyState(posts.isEmpty());
+                                        notifyFragmentReady();
                                     }
                                 }
 
                                 @Override
                                 public void onError(String message) {
                                     if (isAdded()) {
-                                        showLoading(false);
+                                        loadingDialog.dismiss();
                                         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                                         updateEmptyState(true);
+                                        notifyFragmentReady();
                                     }
                                 }
                             });
@@ -150,8 +156,9 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
                     }
                 });
             } else {
-                showLoading(false);
+                loadingDialog.dismiss();
                 updateEmptyState(true);
+                notifyFragmentReady();
             }
         } else {
             // Cargar todos los posts
@@ -160,9 +167,10 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
                 public void onSuccess(List<Post> posts) {
                     if (isAdded()) {
                         // Mostrar los posts inmediatamente con la información disponible
-                        showLoading(false);
+                        loadingDialog.dismiss();
                         adapter.setPosts(posts);
                         updateEmptyState(posts.isEmpty());
+                        notifyFragmentReady();
 
                         // Obtener el token para las peticiones de perfil
                         String token = sessionManager.getToken();
@@ -176,9 +184,10 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
                 @Override
                 public void onError(String message) {
                     if (isAdded()) {
-                        showLoading(false);
+                        loadingDialog.dismiss();
                         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                         updateEmptyState(true);
+                        notifyFragmentReady();
                     }
                 }
             });
@@ -190,27 +199,25 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
             @Override
             public void onSuccess(List<Post> posts) {
                 if (isAdded()) {
-                    showLoading(false);
+                    loadingDialog.dismiss();
                     adapter.setPosts(posts);
                     updateEmptyState(posts.isEmpty());
+                    notifyFragmentReady();
                 }
             }
 
             @Override
             public void onError(String message) {
                 if (isAdded()) {
-                    showLoading(false);
+                    loadingDialog.dismiss();
                     Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                     updateEmptyState(true);
+                    notifyFragmentReady();
                 }
             }
         });
     }
 
-    private void showLoading(boolean show) {
-        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
-    }
 
     private void updateEmptyState(boolean isEmpty) {
         emptyText.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
@@ -259,7 +266,6 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
         android.util.Log.d("PostsListFragment", "Iniciando carga de perfiles. Total posts: " + posts.size());
 
         if (posts.isEmpty()) {
-            showLoading(false);
             adapter.setPosts(posts);
             updateEmptyState(true);
             return;
@@ -276,7 +282,6 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
         android.util.Log.d("PostsListFragment", "IDs únicos de usuarios: " + uniqueUserIds);
 
         if (uniqueUserIds.isEmpty()) {
-            showLoading(false);
             adapter.setPosts(posts);
             updateEmptyState(posts.isEmpty());
             return;
@@ -423,5 +428,21 @@ public class PostsListFragment extends Fragment implements PostsAdapter.OnPostAc
             }
         }
     }
-}
 
+    private void notifyFragmentReady() {
+        // Notificar a HomeActivity que el fragmento está listo
+        if (getActivity() instanceof HomeActivity) {
+            ((HomeActivity) getActivity()).setFragmentLoading(false);
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        // Cerrar el diálogo si está abierto
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
+    }
+}
