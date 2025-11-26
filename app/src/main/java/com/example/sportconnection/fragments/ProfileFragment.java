@@ -37,6 +37,7 @@ import com.example.sportconnection.model.Sport;
 import com.example.sportconnection.model.UploadPhotoResponse;
 import com.example.sportconnection.repository.AuthRepository;
 import com.example.sportconnection.repository.LookupRepository;
+import com.example.sportconnection.repository.SubscriptionRepository;
 import com.example.sportconnection.utils.LoadingDialog;
 import com.example.sportconnection.utils.SessionManager;
 import com.example.sportconnection.utils.ThreadManager;
@@ -73,10 +74,12 @@ public class ProfileFragment extends Fragment {
     private TextView textUserDescription;
     private Button buttonEditProfile;
     private Button buttonLogout;
+    private Button btnSubscribe;
 
     private SessionManager sessionManager;
     private AuthRepository authRepository;
     private LookupRepository lookupRepository;
+    private SubscriptionRepository subscriptionRepository;
     private LoadingDialog loadingDialog;
     private ThreadManager threadManager;
 
@@ -125,16 +128,21 @@ public class ProfileFragment extends Fragment {
         textUserDescription = view.findViewById(R.id.textUserDescription);
         buttonEditProfile = view.findViewById(R.id.buttonEditProfile);
         buttonLogout = view.findViewById(R.id.buttonLogout);
+        btnSubscribe = view.findViewById(R.id.btnSubscribe);
 
         // Inicializar utilidades
         sessionManager = new SessionManager(requireContext());
         authRepository = new AuthRepository();
         lookupRepository = new LookupRepository();
+        subscriptionRepository = new SubscriptionRepository();
         loadingDialog = new LoadingDialog(requireContext());
         threadManager = ThreadManager.getInstance();
 
         // Cargar información del usuario
         loadUserProfile();
+
+        // Cargar estado de suscripción para actualizar el botón
+        updateSubscriptionButton();
 
         // Configurar botón de cambiar foto
         buttonChangePhoto.setOnClickListener(new View.OnClickListener() {
@@ -161,6 +169,15 @@ public class ProfileFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 logoutUser();
+            }
+        });
+
+        // Configurar botón de suscripción
+        btnSubscribe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Acción para el botón de suscripción
+                handleSubscription();
             }
         });
 
@@ -629,6 +646,216 @@ public class ProfileFragment extends Fragment {
                 });
             }
         });
+    }
+
+    private void handleSubscription() {
+        // Primero verificar el estado de suscripción del usuario
+        loadingDialog.show("Verificando suscripción...");
+
+        String token = sessionManager.getToken();
+        if (token == null) {
+            loadingDialog.dismiss();
+            Toast.makeText(requireContext(), "Error: Sesión no válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        subscriptionRepository.getSubscriptionStatus(token, new Callback<com.example.sportconnection.model.SubscriptionStatus>() {
+            @Override
+            public void onResponse(Call<com.example.sportconnection.model.SubscriptionStatus> call, Response<com.example.sportconnection.model.SubscriptionStatus> response) {
+                loadingDialog.dismiss();
+
+                if (response.isSuccessful() && response.body() != null) {
+                    com.example.sportconnection.model.SubscriptionStatus status = response.body();
+
+                    if (status.isActive()) {
+                        // Usuario ya tiene suscripción activa
+                        showSubscriptionDetails(status);
+                    } else {
+                        // Usuario no tiene suscripción, mostrar planes disponibles
+                        showSubscriptionPlans();
+                    }
+                } else if (response.code() == 404 || response.code() == 500) {
+                    // 404 o 500 probablemente significa que no tiene suscripción
+                    // El backend puede devolver 500 si no maneja correctamente el caso de "sin suscripción"
+                    Log.d(TAG, "Usuario sin suscripción (código " + response.code() + "), mostrando planes");
+                    showSubscriptionPlans();
+                } else {
+                    // Otro error
+                    String errorMsg = "Error al verificar suscripción (Código: " + response.code() + ")";
+                    Log.e(TAG, errorMsg);
+                    Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<com.example.sportconnection.model.SubscriptionStatus> call, Throwable t) {
+                loadingDialog.dismiss();
+                Log.e(TAG, "Error de conexión al verificar suscripción: " + t.getMessage());
+                Toast.makeText(requireContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateSubscriptionButton() {
+        String token = sessionManager.getToken();
+        if (token == null) {
+            return;
+        }
+
+        subscriptionRepository.getSubscriptionStatus(token, new Callback<com.example.sportconnection.model.SubscriptionStatus>() {
+            @Override
+            public void onResponse(Call<com.example.sportconnection.model.SubscriptionStatus> call, Response<com.example.sportconnection.model.SubscriptionStatus> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    com.example.sportconnection.model.SubscriptionStatus status = response.body();
+
+                    if (status.isActive()) {
+                        // Usuario tiene suscripción activa
+                        btnSubscribe.setText("Premium ✓");
+                        btnSubscribe.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark));
+                    } else {
+                        // Usuario no tiene suscripción
+                        btnSubscribe.setText("Suscribirse");
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<com.example.sportconnection.model.SubscriptionStatus> call, Throwable t) {
+                // Mantener texto por defecto
+            }
+        });
+    }
+
+    private void showSubscriptionDetails(com.example.sportconnection.model.SubscriptionStatus status) {
+        // Mostrar detalles de la suscripción actual
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Suscripción Activa");
+
+        com.example.sportconnection.model.SubscriptionStatus.SubscriptionDetails details = status.getSubscriptionDetails();
+        String message = "Plan: " + details.getPlanName() + "\n" +
+                        "Estado: " + details.getStatus() + "\n" +
+                        "Válida hasta: " + formatSubscriptionDate(details.getEndDate());
+
+        builder.setMessage(message);
+        builder.setPositiveButton("Aceptar", null);
+        builder.setNeutralButton("Renovar", (dialog, which) -> {
+            // Permitir renovar/cambiar plan
+            showSubscriptionPlans();
+        });
+        builder.show();
+    }
+
+    private void showSubscriptionPlans() {
+        loadingDialog.show("Cargando planes...");
+
+        String token = sessionManager.getToken();
+        if (token == null) {
+            loadingDialog.dismiss();
+            Toast.makeText(requireContext(), "Error: Sesión no válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        subscriptionRepository.getSubscriptionPlans(token, new Callback<List<com.example.sportconnection.model.SubscriptionPlan>>() {
+            @Override
+            public void onResponse(Call<List<com.example.sportconnection.model.SubscriptionPlan>> call, Response<List<com.example.sportconnection.model.SubscriptionPlan>> response) {
+                loadingDialog.dismiss();
+
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    List<com.example.sportconnection.model.SubscriptionPlan> plans = response.body();
+                    displaySubscriptionPlansDialog(plans);
+                } else {
+                    Toast.makeText(requireContext(), "No hay planes disponibles", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<com.example.sportconnection.model.SubscriptionPlan>> call, Throwable t) {
+                loadingDialog.dismiss();
+                Toast.makeText(requireContext(), "Error al cargar planes", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void displaySubscriptionPlansDialog(List<com.example.sportconnection.model.SubscriptionPlan> plans) {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Selecciona un Plan Premium");
+
+        String[] planNames = new String[plans.size()];
+        for (int i = 0; i < plans.size(); i++) {
+            planNames[i] = plans.get(i).toString();
+        }
+
+        builder.setItems(planNames, (dialog, which) -> {
+            com.example.sportconnection.model.SubscriptionPlan selectedPlan = plans.get(which);
+            createCheckoutSession(selectedPlan.getId());
+        });
+
+        builder.setNegativeButton("Cancelar", null);
+        builder.show();
+    }
+
+    private void createCheckoutSession(int planId) {
+        loadingDialog.show("Preparando pago...");
+
+        String token = sessionManager.getToken();
+        if (token == null) {
+            loadingDialog.dismiss();
+            Toast.makeText(requireContext(), "Error: Sesión no válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        subscriptionRepository.createCheckoutSession(token, planId, new Callback<com.example.sportconnection.model.CheckoutSessionResponse>() {
+            @Override
+            public void onResponse(Call<com.example.sportconnection.model.CheckoutSessionResponse> call, Response<com.example.sportconnection.model.CheckoutSessionResponse> response) {
+                loadingDialog.dismiss();
+
+                if (response.isSuccessful() && response.body() != null) {
+                    com.example.sportconnection.model.CheckoutSessionResponse checkoutResponse = response.body();
+                    String checkoutUrl = checkoutResponse.getCheckoutUrl();
+
+                    // Abrir el navegador con la URL de checkout de Stripe
+                    openStripeCheckout(checkoutUrl);
+                } else {
+                    String errorMessage = "Error al crear sesión de pago";
+                    if (response.code() == 400) {
+                        errorMessage = "Ya tienes una suscripción activa";
+                    }
+                    Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<com.example.sportconnection.model.CheckoutSessionResponse> call, Throwable t) {
+                loadingDialog.dismiss();
+                Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void openStripeCheckout(String checkoutUrl) {
+        try {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(checkoutUrl));
+            startActivity(browserIntent);
+
+            Toast.makeText(requireContext(),
+                "Completa el pago en el navegador. La suscripción se activará automáticamente.",
+                Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Log.e(TAG, "Error al abrir navegador: " + e.getMessage());
+            Toast.makeText(requireContext(), "Error al abrir el navegador", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private String formatSubscriptionDate(String isoDate) {
+        // Convertir fecha ISO a formato legible
+        if (isoDate != null && isoDate.length() >= 10) {
+            String datePart = isoDate.substring(0, 10);
+            String[] parts = datePart.split("-");
+            if (parts.length == 3) {
+                return parts[2] + "/" + parts[1] + "/" + parts[0];
+            }
+        }
+        return isoDate;
     }
 
     @Override

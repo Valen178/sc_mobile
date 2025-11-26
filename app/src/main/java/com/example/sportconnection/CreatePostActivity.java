@@ -47,6 +47,32 @@ public class CreatePostActivity extends AppCompatActivity {
         btnClose.setOnClickListener(v -> finish());
 
         btnPublish.setOnClickListener(v -> publishPost());
+
+        // Configurar manejo del teclado
+        setupKeyboardHandling();
+    }
+
+    private void setupKeyboardHandling() {
+        // Asegurar que los campos sean visibles cuando se enfocan
+        if (editTextContent != null) {
+            editTextContent.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    v.postDelayed(() -> {
+                        v.getParent().requestChildFocus(v, v);
+                    }, 200);
+                }
+            });
+        }
+
+        if (editTextUrl != null) {
+            editTextUrl.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    v.postDelayed(() -> {
+                        v.getParent().requestChildFocus(v, v);
+                    }, 200);
+                }
+            });
+        }
     }
 
     private void publishPost() {
@@ -103,4 +129,3 @@ public class CreatePostActivity extends AppCompatActivity {
         }
     }
 }
-

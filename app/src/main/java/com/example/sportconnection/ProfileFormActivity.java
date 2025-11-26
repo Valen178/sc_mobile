@@ -14,7 +14,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.text.SimpleDateFormat;
@@ -77,7 +76,6 @@ public class ProfileFormActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_profile_form);
 
         // Obtener datos del Intent
@@ -157,6 +155,9 @@ public class ProfileFormActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Configurar manejo del teclado
+        setupKeyboardHandling();
     }
 
     private void setupFormByProfileType() {
@@ -420,10 +421,6 @@ public class ProfileFormActivity extends AppCompatActivity {
             }
         }
 
-        if (profileType.equalsIgnoreCase("agent")) {
-            String agency = editTextAgency.getText().toString().trim();
-        }
-
         if (profileType.equalsIgnoreCase("team")) {
             String job = editTextLastName.getText().toString().trim();
             if (job.isEmpty()) {
@@ -585,7 +582,18 @@ public class ProfileFormActivity extends AppCompatActivity {
                     if (profileResponse.getProfile() != null) {
                         currentProfile = profileResponse.getProfile();
                         profileId = currentProfile.getId(); // Guardar el ID del perfil para la actualización
-                        profileType = profileResponse.getProfileType(); // Actualizar el profileType del nivel superior
+
+                        // Intentar obtener el profileType del nivel superior primero, si no, del objeto profile
+                        profileType = profileResponse.getProfileType();
+                        if (profileType == null || profileType.isEmpty()) {
+                            profileType = currentProfile.getProfileType();
+                        }
+
+                        Log.d(TAG, "loadCurrentProfile: profileType cargado = " + profileType);
+
+                        // Reconfigurar el formulario con el tipo de perfil correcto
+                        setupFormByProfileType();
+
                         populateFormWithProfileData();
                     } else {
                         Toast.makeText(ProfileFormActivity.this,
@@ -795,6 +803,28 @@ public class ProfileFormActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    private void setupKeyboardHandling() {
+        // Lista de todos los EditText que necesitan scroll automático
+        EditText[] editTexts = {
+            editTextName, editTextLastName, editTextBirthdate,
+            editTextHeight, editTextWeight, editTextPhone,
+            editTextInstagram, editTextTwitter, editTextDescription, editTextAgency
+        };
+
+        for (EditText editText : editTexts) {
+            if (editText != null) {
+                editText.setOnFocusChangeListener((v, hasFocus) -> {
+                    if (hasFocus) {
+                        // Desplazar después de un pequeño delay para asegurar que el teclado esté visible
+                        v.postDelayed(() -> {
+                            v.getParent().requestChildFocus(v, v);
+                        }, 200);
+                    }
+                });
+            }
+        }
     }
 
     @Override

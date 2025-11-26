@@ -21,6 +21,10 @@ import com.example.sportconnection.model.DiscoverResponse;
 import com.example.sportconnection.model.SwipeRequest;
 import com.example.sportconnection.model.SwipeResponse;
 import com.example.sportconnection.model.MatchesResponse;
+import com.example.sportconnection.model.SubscriptionPlan;
+import com.example.sportconnection.model.CreateCheckoutRequest;
+import com.example.sportconnection.model.CheckoutSessionResponse;
+import com.example.sportconnection.model.SubscriptionStatus;
 
 import java.util.List;
 
@@ -129,6 +133,23 @@ public interface ApiService {
 
     @GET("/swipe/matches")
     Call<MatchesResponse> getMatches(
+            @Header("Authorization") String token
+    );
+
+    // Endpoints de suscripción
+    @GET("/subscriptions/plans")
+    Call<List<SubscriptionPlan>> getSubscriptionPlans(
+            @Header("Authorization") String token
+    );
+
+    @POST("/subscriptions/create-checkout-session")
+    Call<CheckoutSessionResponse> createCheckoutSession(
+            @Header("Authorization") String token,
+            @Body CreateCheckoutRequest request
+    );
+
+    @GET("/subscriptions/status")
+    Call<SubscriptionStatus> getSubscriptionStatus(
             @Header("Authorization") String token
     );
 }

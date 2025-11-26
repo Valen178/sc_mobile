@@ -6,7 +6,7 @@ public class GetProfileResponse {
     @SerializedName("user_id")
     private int userId;
 
-    @SerializedName("profile_type")
+    @SerializedName(value = "profileType", alternate = {"profile_type"})
     private String profileType;
 
     private ProfileData profile;
