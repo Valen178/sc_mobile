@@ -986,6 +986,12 @@ Authorization: Bearer {token}
 - El usuario debe acceder a `checkout_url` para completar el pago
 - La suscripción se crea en estado `"pending"`
 - Cuando el pago se completa, Stripe enviará un webhook para activar la suscripción
+- **Configuración de Redirección:**
+  - `FRONTEND_URL` debe estar configurada en las variables de entorno
+  - Formato requerido: `https://dominio.com` (con protocolo completo)
+  - Para apps móviles sin frontend web, puede usar: `https://stripe.com/docs/payments/checkout`
+  - Después del pago, el usuario será redirigido a `${FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`
+  - Si cancela, será redirigido a `${FRONTEND_URL}/cancel`
 
 **Errores Posibles:**
 - `400`: Plan ID requerido o inválido

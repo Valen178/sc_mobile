@@ -755,6 +755,8 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
+        Log.d(TAG, "Solicitando planes de suscripción...");
+
         subscriptionRepository.getSubscriptionPlans(token, new Callback<List<com.example.sportconnection.model.SubscriptionPlan>>() {
             @Override
             public void onResponse(Call<List<com.example.sportconnection.model.SubscriptionPlan>> call, Response<List<com.example.sportconnection.model.SubscriptionPlan>> response) {
@@ -762,16 +764,22 @@ public class ProfileFragment extends Fragment {
 
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                     List<com.example.sportconnection.model.SubscriptionPlan> plans = response.body();
+                    Log.d(TAG, "Planes obtenidos: " + plans.size());
+                    for (com.example.sportconnection.model.SubscriptionPlan plan : plans) {
+                        Log.d(TAG, "Plan: ID=" + plan.getId() + ", Nombre=" + plan.getName() + ", Precio=$" + plan.getPrice());
+                    }
                     displaySubscriptionPlansDialog(plans);
                 } else {
-                    Toast.makeText(requireContext(), "No hay planes disponibles", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error al obtener planes - Código: " + response.code());
+                    Toast.makeText(requireContext(), "No hay planes disponibles (Código: " + response.code() + ")", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<List<com.example.sportconnection.model.SubscriptionPlan>> call, Throwable t) {
                 loadingDialog.dismiss();
-                Toast.makeText(requireContext(), "Error al cargar planes", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error de conexión al cargar planes: " + t.getMessage());
+                Toast.makeText(requireContext(), "Error al cargar planes: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -804,6 +812,8 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
+        Log.d(TAG, "Creando sesión de checkout para plan_id: " + planId);
+
         subscriptionRepository.createCheckoutSession(token, planId, new Callback<com.example.sportconnection.model.CheckoutSessionResponse>() {
             @Override
             public void onResponse(Call<com.example.sportconnection.model.CheckoutSessionResponse> call, Response<com.example.sportconnection.model.CheckoutSessionResponse> response) {
@@ -816,18 +826,50 @@ public class ProfileFragment extends Fragment {
                     // Abrir el navegador con la URL de checkout de Stripe
                     openStripeCheckout(checkoutUrl);
                 } else {
-                    String errorMessage = "Error al crear sesión de pago";
+                    String errorMessage = "Error al crear sesión de pago (Código: " + response.code() + ")";
+
+                    // Intentar obtener más detalles del error
+                    try {
+                        if (response.errorBody() != null) {
+                            String errorBody = response.errorBody().string();
+                            Log.e(TAG, "Error al crear checkout - Body: " + errorBody);
+
+                            // Extraer mensaje si existe
+                            if (errorBody.contains("message")) {
+                                int start = errorBody.indexOf("\"message\":\"") + 11;
+                                int end = errorBody.indexOf("\"", start);
+                                if (start > 10 && end > start) {
+                                    String serverMessage = errorBody.substring(start, end);
+                                    errorMessage = serverMessage;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error al leer error body: " + e.getMessage());
+                    }
+
                     if (response.code() == 400) {
                         errorMessage = "Ya tienes una suscripción activa";
+                    } else if (response.code() == 500) {
+                        // Error 500 generalmente significa problema de configuración en el servidor
+                        if (errorMessage.contains("creating checkout session") ||
+                            errorMessage.contains("Stripe") ||
+                            errorMessage.contains("checkout session")) {
+                            errorMessage = "Error del servidor al procesar el pago. Por favor, contacta al administrador. (Las claves de Stripe pueden no estar configuradas)";
+                        }
                     }
-                    Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show();
+
+                    Log.e(TAG, "Error al crear sesión de pago: " + errorMessage);
+                    Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<com.example.sportconnection.model.CheckoutSessionResponse> call, Throwable t) {
                 loadingDialog.dismiss();
-                Toast.makeText(requireContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
+                String errorMsg = "Error de conexión: " + (t.getMessage() != null ? t.getMessage() : "Desconocido");
+                Log.e(TAG, "Error de conexión al crear checkout: " + errorMsg);
+                Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -885,4 +927,3 @@ public class ProfileFragment extends Fragment {
         }
     }
 }
-
