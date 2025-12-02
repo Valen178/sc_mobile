@@ -742,6 +742,10 @@ public class ProfileFragment extends Fragment {
             // Permitir renovar/cambiar plan
             showSubscriptionPlans();
         });
+        builder.setNegativeButton("Cancelar Suscripción", (dialog, which) -> {
+            // Confirmar cancelación
+            showCancelSubscriptionConfirmation();
+        });
         builder.show();
     }
 
@@ -852,7 +856,7 @@ public class ProfileFragment extends Fragment {
                         errorMessage = "Ya tienes una suscripción activa";
                     } else if (response.code() == 500) {
                         // Error 500 generalmente significa problema de configuración en el servidor
-                        if (errorMessage.contains("creating checkout session") ||
+                        if (errorMessage.contains("creating checkout session") || 
                             errorMessage.contains("Stripe") ||
                             errorMessage.contains("checkout session")) {
                             errorMessage = "Error del servidor al procesar el pago. Por favor, contacta al administrador. (Las claves de Stripe pueden no estar configuradas)";
@@ -898,6 +902,56 @@ public class ProfileFragment extends Fragment {
             }
         }
         return isoDate;
+    }
+
+    private void showCancelSubscriptionConfirmation() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Cancelar Suscripción");
+        builder.setMessage("¿Estás seguro que deseas cancelar tu suscripción? Perderás acceso a todas las funciones premium inmediatamente.");
+
+        builder.setPositiveButton("Sí, Cancelar", (dialog, which) -> {
+            cancelSubscription();
+        });
+
+        builder.setNegativeButton("No, Mantener", null);
+        builder.show();
+    }
+
+    private void cancelSubscription() {
+        loadingDialog.show("Cancelando suscripción...");
+
+        String token = sessionManager.getToken();
+        if (token == null) {
+            loadingDialog.dismiss();
+            Toast.makeText(requireContext(), "Error: Sesión no válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        subscriptionRepository.cancelSubscription(token, new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                loadingDialog.dismiss();
+
+                if (response.isSuccessful()) {
+                    Toast.makeText(requireContext(), "Suscripción cancelada exitosamente", Toast.LENGTH_LONG).show();
+
+                    // Actualizar el botón de suscripción
+                    updateSubscriptionButton();
+                } else {
+                    String errorMessage = "Error al cancelar suscripción";
+                    if (response.code() == 404) {
+                        errorMessage = "No se encontró una suscripción activa";
+                    }
+                    Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                loadingDialog.dismiss();
+                Toast.makeText(requireContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     @Override

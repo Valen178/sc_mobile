@@ -95,7 +95,7 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:src="@android:drawable/ic_dialog_map"
-                    android:tint="@android:color/white" />
+                    app:tint="@android:color/white" />
 
                 <TextView
                     android:id="@+id/userLocation"
@@ -119,7 +119,7 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:src="@android:drawable/star_on"
-                    android:tint="@android:color/white" />
+                    app:tint="@android:color/white" />
 
                 <TextView
                     android:id="@+id/userSport"

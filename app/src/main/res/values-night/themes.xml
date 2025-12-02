@@ -1,7 +1,54 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base application theme - Dark Mode -->
     <style name="Base.Theme.SportConnection" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Colores principales -->
+        <item name="colorPrimary">@color/primary_light</item>
+        <item name="colorPrimaryVariant">@color/primary</item>
+        <item name="colorOnPrimary">@color/text_on_primary</item>
+        
+        <!-- Colores secundarios -->
+        <item name="colorSecondary">@color/secondary_light</item>
+        <item name="colorSecondaryVariant">@color/secondary</item>
+        <item name="colorOnSecondary">@color/text_on_secondary</item>
+        
+        <!-- Colores de fondo y superficie -->
+        <item name="android:colorBackground">@color/dark</item>
+        <item name="colorSurface">#1e1e1e</item>
+        <item name="colorOnSurface">@color/light</item>
+        <item name="colorOnBackground">@color/light</item>
+        
+        <!-- Colores de error -->
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/white</item>
+        
+        <!-- Color de la barra de estado -->
+        <item name="android:statusBarColor">@color/dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        
+        <!-- Color de la barra de navegación -->
+        <item name="android:navigationBarColor">@color/dark</item>
+        
+        <!-- Colores de texto -->
+        <item name="android:textColorPrimary">@color/light</item>
+        <item name="android:textColorSecondary">@color/primary_light</item>
+        
+        <!-- Colores de botones -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Dark</item>
+        
+        <!-- Colores de inputs -->
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout.Dark</item>
+    </style>
+    
+    <!-- Estilo para botones en modo oscuro -->
+    <style name="Widget.App.Button.Dark" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/primary_light</item>
+        <item name="android:textColor">@color/text_on_primary</item>
+        <item name="cornerRadius">8dp</item>
+    </style>
+    
+    <!-- Estilo para inputs en modo oscuro -->
+    <style name="Widget.App.TextInputLayout.Dark" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/primary_light</item>
+        <item name="hintTextColor">@color/secondary_light</item>
     </style>
 </resources>

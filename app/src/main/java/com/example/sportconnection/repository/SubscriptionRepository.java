@@ -41,5 +41,12 @@ public class SubscriptionRepository {
         Call<SubscriptionStatus> call = apiService.getSubscriptionStatus(authHeader);
         call.enqueue(callback);
     }
+
+    // Cancelar suscripción activa
+    public void cancelSubscription(String token, Callback<Void> callback) {
+        String authHeader = "Bearer " + token;
+        Call<Void> call = apiService.cancelSubscription(authHeader);
+        call.enqueue(callback);
+    }
 }
 

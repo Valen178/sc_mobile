@@ -1,5 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Paleta de colores de la aplicación -->
+    <!-- Color principal - Verde turquesa brillante -->
+    <color name="primary">#00a996</color>
+    
+    <!-- Color secundario - Verde turquesa oscuro -->
+    <color name="secondary">#02808f</color>
+    
+    <!-- Color de fondo oscuro / Texto oscuro -->
+    <color name="dark">#2e2e2e</color>
+    
+    <!-- Color claro / Fondo claro -->
+    <color name="light">#dff7f9</color>
+    
+    <!-- Colores base -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Variantes para mejor contraste -->
+    <color name="primary_dark">#008c7d</color>
+    <color name="primary_light">#33bfad</color>
+    <color name="secondary_dark">#016672</color>
+    <color name="secondary_light">#3599a6</color>
+    
+    <!-- Colores de texto -->
+    <color name="text_on_primary">#FFFFFF</color>
+    <color name="text_on_secondary">#FFFFFF</color>
+    <color name="text_on_light">#2e2e2e</color>
+    <color name="text_on_dark">#FFFFFF</color>
+    
+    <!-- Colores de estado -->
+    <color name="success">#00a996</color>
+    <color name="error">#DC3545</color>
+    <color name="warning">#FFC107</color>
+    <color name="info">#02808f</color>
+    
+    <!-- Colores con opacidad para overlays -->
+    <color name="primary_alpha_50">#8000a996</color>
+    <color name="dark_alpha_80">#CC2e2e2e</color>
+    <color name="light_alpha_80">#CCdff7f9</color>
 </resources>

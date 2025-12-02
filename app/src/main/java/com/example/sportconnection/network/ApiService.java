@@ -25,6 +25,8 @@ import com.example.sportconnection.model.SubscriptionPlan;
 import com.example.sportconnection.model.CreateCheckoutRequest;
 import com.example.sportconnection.model.CheckoutSessionResponse;
 import com.example.sportconnection.model.SubscriptionStatus;
+import com.example.sportconnection.model.Venue;
+import com.example.sportconnection.model.VenuesResponse;
 
 import java.util.List;
 
@@ -151,6 +153,23 @@ public interface ApiService {
     @GET("/subscriptions/status")
     Call<SubscriptionStatus> getSubscriptionStatus(
             @Header("Authorization") String token
+    );
+
+    @POST("/subscriptions/cancel")
+    Call<Void> cancelSubscription(
+            @Header("Authorization") String token
+    );
+
+    // Endpoints de venues
+    @GET("/venues")
+    Call<VenuesResponse> getVenues(
+            @Header("Authorization") String token
+    );
+
+    @GET("/venues/{id}")
+    Call<VenuesResponse> getVenueById(
+            @Header("Authorization") String token,
+            @retrofit2.http.Path("id") int venueId
     );
 }
 
