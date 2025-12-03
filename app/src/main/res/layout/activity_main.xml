@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
+    android:background="@drawable/fondo"
     tools:context=".MainActivity">
 
     <androidx.cardview.widget.CardView
@@ -14,7 +15,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
-        app:cardCornerRadius="8dp"
+        app:cardCornerRadius="25dp"
         app:cardElevation="4dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -24,26 +25,42 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="385dp"
+            android:gravity="center"
             android:orientation="vertical"
-            android:padding="32dp"
-            android:gravity="center">
+            android:padding="32dp">
 
             <TextView
                 android:id="@+id/textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="32dp"
                 android:text="Sport Connection"
                 android:textSize="30sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="32dp" />
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginBottom="32dp"
+                android:background="#D1D5DB" />
+
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="32dp"
+                android:text="Una plataforma profesional para la conexión y desarrollo deportivo"
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:textStyle="normal" />
 
             <Button
                 android:id="@+id/button1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Iniciar Sesión"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="16dp"
+                android:text="Iniciar Sesión" />
 
             <Button
                 android:id="@+id/button2"
@@ -54,5 +71,7 @@
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

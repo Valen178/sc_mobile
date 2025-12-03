@@ -1,42 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Paleta de colores de la aplicación -->
-    <!-- Color principal - Verde turquesa brillante -->
-    <color name="primary">#00a996</color>
-    
-    <!-- Color secundario - Verde turquesa oscuro -->
-    <color name="secondary">#02808f</color>
-    
-    <!-- Color de fondo oscuro / Texto oscuro -->
-    <color name="dark">#2e2e2e</color>
-    
-    <!-- Color claro / Fondo claro -->
-    <color name="light">#dff7f9</color>
-    
+
+    <!-- 🎨 Paleta principal (Gama de azules) -->
+    <color name="primary">#2563EB</color>        <!-- Azul principal (Blue 600) -->
+    <color name="primary_dark">#1E3A8A</color>   <!-- Azul más oscuro (Blue 900) -->
+    <color name="primary_light">#3B82F6</color>  <!-- Azul claro (Blue 500) -->
+
+    <!-- 🎨 Secundarios (variantes suaves del azul) -->
+    <color name="secondary">#60A5FA</color>       <!-- Azul suave (Blue 400) -->
+    <color name="secondary_dark">#1E40AF</color>  <!-- Azul vibrante (Blue 800) -->
+    <color name="secondary_light">#93C5FD</color> <!-- Azul muy claro (Blue 300) -->
+
+    <!-- Fondo claro y oscuro -->
+    <color name="light">#F1F5F9</color>     <!-- Azul grisáceo MUY claro (Slate 100) -->
+    <color name="dark">#0F172A</color>      <!-- Azul gris oscuro para tema dark -->
+    <color name="navigation_background">#0D1223</color>
+
     <!-- Colores base -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    
-    <!-- Variantes para mejor contraste -->
-    <color name="primary_dark">#008c7d</color>
-    <color name="primary_light">#33bfad</color>
-    <color name="secondary_dark">#016672</color>
-    <color name="secondary_light">#3599a6</color>
-    
+
     <!-- Colores de texto -->
     <color name="text_on_primary">#FFFFFF</color>
     <color name="text_on_secondary">#FFFFFF</color>
-    <color name="text_on_light">#2e2e2e</color>
+    <color name="text_on_light">#0F172A</color>
     <color name="text_on_dark">#FFFFFF</color>
-    
-    <!-- Colores de estado -->
-    <color name="success">#00a996</color>
-    <color name="error">#DC3545</color>
-    <color name="warning">#FFC107</color>
-    <color name="info">#02808f</color>
-    
-    <!-- Colores con opacidad para overlays -->
-    <color name="primary_alpha_50">#8000a996</color>
-    <color name="dark_alpha_80">#CC2e2e2e</color>
-    <color name="light_alpha_80">#CCdff7f9</color>
+
+    <!-- Estados -->
+    <color name="success">#16A34A</color>   <!-- Verde (interfaz) -->
+    <color name="error">#DC2626</color>     <!-- Rojo -->
+    <color name="warning">#F59E0B</color>   <!-- Amarillo -->
+    <color name="info">#0284C7</color>      <!-- Azul info -->
+
+    <!-- Opacidades -->
+    <color name="primary_alpha_50">#801E40AF</color>   <!-- 50% del primary -->
+    <color name="dark_alpha_80">#CC0F172A</color>      <!-- 80% dark -->
+    <color name="light_alpha_80">#CCF1F5F9</color>     <!-- 80% light -->
+
 </resources>

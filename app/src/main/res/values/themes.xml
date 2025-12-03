@@ -27,7 +27,7 @@
 
         <!-- Color de la barra de navegación -->
         <item name="android:navigationBarColor">@color/white</item>
-        
+
         <!-- Colores de texto -->
         <item name="android:textColorPrimary">@color/dark</item>
         <item name="android:textColorSecondary">@color/secondary</item>
@@ -42,6 +42,28 @@
     <style name="Theme.SportConnection" parent="Base.Theme.SportConnection" />
 
     <!-- Estilo para botones -->
+
+    <style name="Widget.App.Button.Google" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@null</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="materialThemeOverlay">@null</item>
+        <item name="shapeAppearance">@null</item>
+        <item name="shapeAppearanceOverlay">@null</item>
+        <item name="android:background">@drawable/boton_google</item>
+        <item name="android:textColor">@color/dark</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:minWidth">0dp</item>
+    </style>
+
+    <style name="Widget.App.Button.Special" parent="Widget.Material3.Button">
+        <item name="materialThemeOverlay">@null</item>
+        <item name="shapeAppearance">@null</item>
+        <item name="shapeAppearanceOverlay">@null</item>
+        <item name="backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/text_on_primary</item>
+        <item name="cornerRadius">60dp</item>
+    </style>
+
     <style name="Widget.App.Button" parent="Widget.Material3.Button">
         <item name="backgroundTint">@color/primary</item>
         <item name="android:textColor">@color/text_on_primary</item>
@@ -59,4 +81,6 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
+
 </resources>

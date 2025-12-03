@@ -25,8 +25,6 @@ import com.example.sportconnection.network.ApiService;
 import com.example.sportconnection.repository.SubscriptionRepository;
 import com.example.sportconnection.utils.LoadingDialog;
 import com.example.sportconnection.utils.SessionManager;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -87,22 +85,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
 
         return view;
-    }
-
-    private boolean checkGooglePlayServices() {
-        GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
-        int status = googleApiAvailability.isGooglePlayServicesAvailable(requireContext());
-
-        if (status != ConnectionResult.SUCCESS) {
-            Log.e(TAG, "Google Play Services error: " + status);
-            if (googleApiAvailability.isUserResolvableError(status)) {
-                googleApiAvailability.getErrorDialog(requireActivity(), status, 2404).show();
-            }
-            return false;
-        }
-
-        Log.d(TAG, "Google Play Services disponible y actualizado");
-        return true;
     }
 
     @Override
@@ -277,7 +259,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             return;
         }
 
-        subscriptionRepository.getSubscriptionStatus("Bearer " + authToken, new Callback<com.example.sportconnection.model.SubscriptionStatus>() {
+        subscriptionRepository.getSubscriptionStatus(authToken, new Callback<com.example.sportconnection.model.SubscriptionStatus>() {
             @Override
             public void onResponse(Call<com.example.sportconnection.model.SubscriptionStatus> call, Response<com.example.sportconnection.model.SubscriptionStatus> response) {
                 loadingDialog.dismiss();
@@ -311,7 +293,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             return;
         }
 
-        subscriptionRepository.getSubscriptionStatus("Bearer " + authToken, new Callback<com.example.sportconnection.model.SubscriptionStatus>() {
+        subscriptionRepository.getSubscriptionStatus(authToken, new Callback<com.example.sportconnection.model.SubscriptionStatus>() {
             @Override
             public void onResponse(Call<com.example.sportconnection.model.SubscriptionStatus> call, Response<com.example.sportconnection.model.SubscriptionStatus> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -358,7 +340,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             return;
         }
 
-        subscriptionRepository.getSubscriptionPlans("Bearer " + authToken, new Callback<List<com.example.sportconnection.model.SubscriptionPlan>>() {
+        subscriptionRepository.getSubscriptionPlans(authToken, new Callback<List<com.example.sportconnection.model.SubscriptionPlan>>() {
             @Override
             public void onResponse(Call<List<com.example.sportconnection.model.SubscriptionPlan>> call, Response<List<com.example.sportconnection.model.SubscriptionPlan>> response) {
                 loadingDialog.dismiss();
@@ -406,7 +388,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             return;
         }
 
-        subscriptionRepository.createCheckoutSession("Bearer " + authToken, planId, new Callback<com.example.sportconnection.model.CheckoutSessionResponse>() {
+        subscriptionRepository.createCheckoutSession(authToken, planId, new Callback<com.example.sportconnection.model.CheckoutSessionResponse>() {
             @Override
             public void onResponse(Call<com.example.sportconnection.model.CheckoutSessionResponse> call, Response<com.example.sportconnection.model.CheckoutSessionResponse> response) {
                 loadingDialog.dismiss();
@@ -474,7 +456,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             return;
         }
 
-        subscriptionRepository.cancelSubscription("Bearer " + authToken, new Callback<Void>() {
+        subscriptionRepository.cancelSubscription(authToken, new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
                 loadingDialog.dismiss();
