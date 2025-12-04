@@ -27,6 +27,8 @@ import com.example.sportconnection.model.DiscoverResponse;
 import com.example.sportconnection.model.SwipeRequest;
 import com.example.sportconnection.model.SwipeResponse;
 import com.example.sportconnection.model.SwipeUser;
+import com.example.sportconnection.model.SwipeStatsResponse;
+import com.example.sportconnection.model.ContactInfoResponse;
 import com.example.sportconnection.network.ApiClient;
 import com.example.sportconnection.network.ApiService;
 import com.example.sportconnection.repository.SubscriptionRepository;
@@ -61,6 +63,11 @@ public class ConnectFragment extends Fragment {
     private String currentFilter = "both"; // both, team, agent
     private String userProfileType;
     private String token;
+
+    // Premium y swipes
+    private boolean isPremium = false;
+    private Integer swipesRemaining = null;
+    private TextView swipeCounterText;
 
     // API
     private ApiService apiService;
@@ -106,6 +113,7 @@ public class ConnectFragment extends Fragment {
         btnDislike = view.findViewById(R.id.btnDislike);
         emptyStateContainer = view.findViewById(R.id.emptyStateContainer);
         progressBar = view.findViewById(R.id.progressBar);
+        swipeCounterText = view.findViewById(R.id.swipeCounterText);
     }
 
     private void initializeData() {
@@ -125,15 +133,23 @@ public class ConnectFragment extends Fragment {
         apiService = ApiClient.getApiService();
         userList = new ArrayList<>();
 
-        // Mostrar filtros solo para atletas
+        // Debug: Log del tipo de perfil
+        Log.d(TAG, "Tipo de perfil del usuario: " + userProfileType);
+
+        // Mostrar filtros SOLO para atletas (profileType = "athlete")
+        // Nota: "user" significa que no tiene perfil completado aún
         if ("athlete".equals(userProfileType)) {
+            Log.d(TAG, "Usuario es atleta - Mostrando filtros");
             filterContainer.setVisibility(View.VISIBLE);
+            updateFilterButtons(); // Inicializar el estado visual de los botones
         } else {
+            Log.d(TAG, "Usuario NO es atleta (profileType: " + userProfileType + ") - Ocultando filtros");
             filterContainer.setVisibility(View.GONE);
         }
 
         setupSubscriptionButton();
         updateSubscriptionButton();
+        loadSwipeStats();
         loadUsers();
     }
 
@@ -150,12 +166,20 @@ public class ConnectFragment extends Fragment {
         });
 
         btnFilterTeams.setOnClickListener(v -> {
+            if (!isPremium) {
+                showFilterPaywallDialog();
+                return;
+            }
             currentFilter = "team";
             updateFilterButtons();
             reloadUsers();
         });
 
         btnFilterAgents.setOnClickListener(v -> {
+            if (!isPremium) {
+                showFilterPaywallDialog();
+                return;
+            }
             currentFilter = "agent";
             updateFilterButtons();
             reloadUsers();
@@ -167,27 +191,42 @@ public class ConnectFragment extends Fragment {
     }
 
     private void updateFilterButtons() {
+        // Colores simples para los botones
+        int colorNormal = 0xFFE0E0E0; // Gris claro
+        int colorSelected = 0xFF2196F3; // Azul
+        int textColorNormal = 0xFF757575; // Gris oscuro
+        int textColorSelected = 0xFFFFFFFF; // Blanco
+
         // Reset todos los botones
-        btnFilterAll.setBackgroundResource(R.drawable.filter_button_background);
-        btnFilterAll.setTextColor(getResources().getColor(android.R.color.darker_gray));
-        btnFilterTeams.setBackgroundResource(R.drawable.filter_button_background);
-        btnFilterTeams.setTextColor(getResources().getColor(android.R.color.darker_gray));
-        btnFilterAgents.setBackgroundResource(R.drawable.filter_button_background);
-        btnFilterAgents.setTextColor(getResources().getColor(android.R.color.darker_gray));
+        btnFilterAll.setBackgroundColor(colorNormal);
+        btnFilterAll.setTextColor(textColorNormal);
+        btnFilterTeams.setBackgroundColor(colorNormal);
+        btnFilterTeams.setTextColor(textColorNormal);
+        btnFilterAgents.setBackgroundColor(colorNormal);
+        btnFilterAgents.setTextColor(textColorNormal);
+
+        // Agregar candado si no es premium
+        if (!isPremium) {
+            btnFilterTeams.setText("Equipos 🔒");
+            btnFilterAgents.setText("Agentes 🔒");
+        } else {
+            btnFilterTeams.setText("Equipos");
+            btnFilterAgents.setText("Agentes");
+        }
 
         // Marcar el botón seleccionado
         switch (currentFilter) {
             case "both":
-                btnFilterAll.setBackgroundResource(R.drawable.filter_button_selected);
-                btnFilterAll.setTextColor(getResources().getColor(android.R.color.white));
+                btnFilterAll.setBackgroundColor(colorSelected);
+                btnFilterAll.setTextColor(textColorSelected);
                 break;
             case "team":
-                btnFilterTeams.setBackgroundResource(R.drawable.filter_button_selected);
-                btnFilterTeams.setTextColor(getResources().getColor(android.R.color.white));
+                btnFilterTeams.setBackgroundColor(colorSelected);
+                btnFilterTeams.setTextColor(textColorSelected);
                 break;
             case "agent":
-                btnFilterAgents.setBackgroundResource(R.drawable.filter_button_selected);
-                btnFilterAgents.setTextColor(getResources().getColor(android.R.color.white));
+                btnFilterAgents.setBackgroundColor(colorSelected);
+                btnFilterAgents.setTextColor(textColorSelected);
                 break;
         }
     }
@@ -195,7 +234,16 @@ public class ConnectFragment extends Fragment {
     private void loadUsers() {
         loadingDialog.show("Cargando usuarios...");
 
-        String filter = "athlete".equals(userProfileType) ? currentFilter : null;
+        // Solo aplicar filtro si es atleta (profileType = "athlete") y (es premium O el filtro es "both")
+        String filter = null;
+        if ("athlete".equals(userProfileType)) {
+            if (isPremium || "both".equals(currentFilter)) {
+                filter = currentFilter;
+            } else {
+                // Usuario no premium intentando usar filtros avanzados
+                filter = "both";
+            }
+        }
 
         Call<DiscoverResponse> call = apiService.getDiscoverUsers("Bearer " + token, filter, 20);
         call.enqueue(new Callback<DiscoverResponse>() {
@@ -205,6 +253,22 @@ public class ConnectFragment extends Fragment {
 
                 if (response.isSuccessful() && response.body() != null) {
                     DiscoverResponse discoverResponse = response.body();
+
+                    // IMPORTANTE: Actualizar el profileType desde el backend
+                    String actualProfileType = discoverResponse.getUserProfileType();
+                    if (actualProfileType != null && !actualProfileType.isEmpty()) {
+                        Log.d(TAG, "ProfileType actualizado desde API: " + actualProfileType + " (anterior: " + userProfileType + ")");
+                        userProfileType = actualProfileType;
+
+                        // Actualizar visibilidad de filtros según el profileType real
+                        if ("athlete".equals(userProfileType)) {
+                            filterContainer.setVisibility(View.VISIBLE);
+                            updateFilterButtons();
+                        } else {
+                            filterContainer.setVisibility(View.GONE);
+                        }
+                    }
+
                     userList.clear();
                     userList.addAll(discoverResponse.getUsers());
                     currentUserIndex = 0;
@@ -294,6 +358,7 @@ public class ConnectFragment extends Fragment {
         TextView userLocation = cardView.findViewById(R.id.userLocation);
         TextView userSport = cardView.findViewById(R.id.userSport);
         TextView userDescription = cardView.findViewById(R.id.userDescription);
+        Button btnDirectContact = cardView.findViewById(R.id.btnDirectContactCard);
 
         // Nombre
         userName.setText(user.getName());
@@ -328,6 +393,17 @@ public class ConnectFragment extends Fragment {
             userDescription.setVisibility(View.GONE);
         }
 
+        // Botón de Contacto Directo Premium
+        if (isPremium) {
+            btnDirectContact.setText("📱 Contacto Directo");
+            btnDirectContact.setVisibility(View.VISIBLE);
+            btnDirectContact.setOnClickListener(v -> handleDirectContactFromCard(user.getUserId()));
+        } else {
+            btnDirectContact.setText("📱 Contacto Directo 🔒");
+            btnDirectContact.setVisibility(View.VISIBLE);
+            btnDirectContact.setOnClickListener(v -> showPremiumRequiredDialog());
+        }
+
         // Foto
         if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
             Glide.with(requireContext())
@@ -360,8 +436,21 @@ public class ConnectFragment extends Fragment {
             public void onResponse(Call<SwipeResponse> call, Response<SwipeResponse> response) {
                 if (!isAdded() || getContext() == null) return;
 
+                if (response.code() == 403) {
+                    // Límite de swipes alcanzado
+                    swipesRemaining = 0;
+                    updateSwipeCounter();
+                    showSwipeLimitDialog();
+                    return;
+                }
+
                 if (response.isSuccessful() && response.body() != null) {
                     SwipeResponse swipeResponse = response.body();
+
+                    // Actualizar contador de swipes
+                    swipesRemaining = swipeResponse.getSwipesRemaining();
+                    isPremium = swipeResponse.isPremium();
+                    updateSwipeCounter();
 
                     if (swipeResponse.isMatch()) {
                         Toast.makeText(getContext(), "¡Match! " + swipeResponse.getMessage(), Toast.LENGTH_LONG).show();
@@ -385,6 +474,188 @@ public class ConnectFragment extends Fragment {
     private void hideEmptyState() {
         emptyStateContainer.setVisibility(View.GONE);
         currentSwipeHelper = null;
+    }
+
+    private void loadSwipeStats() {
+        apiService.getSwipeStats("Bearer " + token).enqueue(new Callback<SwipeStatsResponse>() {
+            @Override
+            public void onResponse(Call<SwipeStatsResponse> call, Response<SwipeStatsResponse> response) {
+                if (!isAdded() || getContext() == null) return;
+
+                if (response.isSuccessful() && response.body() != null) {
+                    SwipeStatsResponse stats = response.body();
+                    isPremium = stats.isPremium();
+                    swipesRemaining = stats.getSwipesRemaining();
+                    updateSwipeCounter();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SwipeStatsResponse> call, Throwable t) {
+                Log.e(TAG, "Error loading swipe stats", t);
+            }
+        });
+    }
+
+    private void updateSwipeCounter() {
+        if (!isAdded() || getContext() == null) return;
+
+        if (isPremium) {
+            swipeCounterText.setText("✨ Premium - Swipes ilimitados");
+            swipeCounterText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            swipeCounterText.setVisibility(View.VISIBLE);
+        } else if (swipesRemaining != null) {
+            if (swipesRemaining > 0) {
+                swipeCounterText.setText("⚡ " + swipesRemaining + " swipes restantes hoy");
+                swipeCounterText.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
+                swipeCounterText.setVisibility(View.VISIBLE);
+            } else {
+                swipeCounterText.setText("⚠ Límite de swipes alcanzado. ¡Mejora a Premium!");
+                swipeCounterText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                swipeCounterText.setVisibility(View.VISIBLE);
+            }
+        } else {
+            swipeCounterText.setVisibility(View.GONE);
+        }
+    }
+
+    private void showSwipeLimitDialog() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("¡Límite alcanzado! 🎯");
+
+        String message = "Has usado todos tus swipes de hoy.\n\n" +
+                        "Con Premium obtienes:\n" +
+                        "✅ Swipes ilimitados\n" +
+                        "✅ Filtros avanzados\n" +
+                        "✅ Contacto directo sin match";
+
+        builder.setMessage(message);
+        builder.setPositiveButton("Ver Planes Premium", (dialog, which) -> showSubscriptionPlans());
+        builder.setNegativeButton("Volver mañana", null);
+        builder.show();
+    }
+
+    private void showFilterPaywallDialog() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Filtros Avanzados 🔍");
+
+        String message = "Los filtros avanzados requieren una suscripción premium.\n\n" +
+                        "Con Premium puedes:\n" +
+                        "✅ Filtrar por equipos o agentes\n" +
+                        "✅ Encontrar exactamente lo que buscas\n" +
+                        "✅ Ahorrar tiempo en tu búsqueda";
+
+        builder.setMessage(message);
+        builder.setPositiveButton("Ver Planes Premium", (dialog, which) -> showSubscriptionPlans());
+        builder.setNegativeButton("Cancelar", null);
+        builder.show();
+    }
+
+    private void showPremiumRequiredDialog() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Contacto Directo 📱");
+
+        String message = "El contacto directo requiere una suscripción premium.\n\n" +
+                        "Con Premium puedes:\n" +
+                        "✅ Acceder a información de contacto sin match\n" +
+                        "✅ Swipes ilimitados\n" +
+                        "✅ Filtros avanzados";
+
+        builder.setMessage(message);
+        builder.setPositiveButton("Ver Planes Premium", (dialog, which) -> showSubscriptionPlans());
+        builder.setNegativeButton("Cancelar", null);
+        builder.show();
+    }
+
+    private void handleDirectContactFromCard(int targetUserId) {
+        if (!isPremium) {
+            showPremiumRequiredDialog();
+            return;
+        }
+
+        // Usuario premium - obtener información de contacto
+        loadingDialog.show("Obteniendo información de contacto...");
+
+        apiService.getDirectContact("Bearer " + token, targetUserId).enqueue(new Callback<ContactInfoResponse>() {
+            @Override
+            public void onResponse(Call<ContactInfoResponse> call, Response<ContactInfoResponse> response) {
+                if (!isAdded() || getContext() == null) return;
+
+                loadingDialog.dismiss();
+
+                if (response.code() == 403) {
+                    showPremiumRequiredDialog();
+                    return;
+                }
+
+                if (response.isSuccessful() && response.body() != null) {
+                    showContactInfoDialog(response.body());
+                } else {
+                    Toast.makeText(getContext(), "Error al obtener información de contacto", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ContactInfoResponse> call, Throwable t) {
+                if (!isAdded() || getContext() == null) return;
+
+                loadingDialog.dismiss();
+                Toast.makeText(getContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showContactInfoDialog(ContactInfoResponse contactInfo) {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Información de Contacto");
+
+        StringBuilder message = new StringBuilder();
+        message.append("Nombre: ").append(contactInfo.getName());
+        if (contactInfo.getLastName() != null) {
+            message.append(" ").append(contactInfo.getLastName());
+        }
+        message.append("\n");
+
+        ContactInfoResponse.ContactInfo contact = contactInfo.getContactInfo();
+
+        if (contact.getPhone() != null && !contact.getPhone().isEmpty()) {
+            message.append("\nTeléfono: ").append(contact.getPhone());
+        }
+
+        if (contact.getEmail() != null && !contact.getEmail().isEmpty()) {
+            message.append("\nEmail: ").append(contact.getEmail());
+        }
+
+        if (contact.getInstagram() != null && !contact.getInstagram().isEmpty()) {
+            message.append("\nInstagram: ").append(contact.getInstagram());
+        }
+
+        if (contact.getTwitter() != null && !contact.getTwitter().isEmpty()) {
+            message.append("\nTwitter: ").append(contact.getTwitter());
+        }
+
+        builder.setMessage(message.toString());
+
+        // Agregar botones de acción
+        if (contact.getPhone() != null && !contact.getPhone().isEmpty()) {
+            final String phoneNumber = contact.getPhone();
+            builder.setPositiveButton("Abrir WhatsApp", (dialog, which) -> openWhatsApp(phoneNumber));
+        }
+
+        builder.setNeutralButton("Cerrar", null);
+        builder.show();
+    }
+
+    private void openWhatsApp(String phoneNumber) {
+        try {
+            String cleanNumber = phoneNumber.replaceAll("[^0-9+]", "");
+            String url = "https://wa.me/" + cleanNumber;
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(url));
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(requireContext(), "No se pudo abrir WhatsApp", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void handleSubscription() {

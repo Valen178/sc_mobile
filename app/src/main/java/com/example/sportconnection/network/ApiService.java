@@ -20,6 +20,8 @@ import com.example.sportconnection.model.MyPostsResponse;
 import com.example.sportconnection.model.DiscoverResponse;
 import com.example.sportconnection.model.SwipeRequest;
 import com.example.sportconnection.model.SwipeResponse;
+import com.example.sportconnection.model.SwipeStatsResponse;
+import com.example.sportconnection.model.ContactInfoResponse;
 import com.example.sportconnection.model.MatchesResponse;
 import com.example.sportconnection.model.SubscriptionPlan;
 import com.example.sportconnection.model.CreateCheckoutRequest;
@@ -136,6 +138,17 @@ public interface ApiService {
     @GET("/swipe/matches")
     Call<MatchesResponse> getMatches(
             @Header("Authorization") String token
+    );
+
+    @GET("/swipe/stats")
+    Call<SwipeStatsResponse> getSwipeStats(
+            @Header("Authorization") String token
+    );
+
+    @GET("/swipe/contact/{target_user_id}")
+    Call<ContactInfoResponse> getDirectContact(
+            @Header("Authorization") String token,
+            @retrofit2.http.Path("target_user_id") int targetUserId
     );
 
     // Endpoints de suscripción

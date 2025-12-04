@@ -143,6 +143,18 @@
                 android:maxLines="3"
                 android:ellipsize="end" />
 
+            <!-- Botón de Contacto Directo Premium -->
+            <Button
+                android:id="@+id/btnDirectContactCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="📱 Contacto Directo"
+                android:textSize="14sp"
+                android:padding="12dp"
+                android:visibility="gone"
+                android:backgroundTint="#4CAF50" />
+
         </LinearLayout>
 
     </RelativeLayout>

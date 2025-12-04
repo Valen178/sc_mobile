@@ -249,4 +249,3 @@ public class ViewProfileActivity extends AppCompatActivity {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 }
-

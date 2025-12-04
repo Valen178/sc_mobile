@@ -2,33 +2,15 @@ package com.example.sportconnection.model;
 
 import com.google.gson.annotations.SerializedName;
 
-public class SwipeResponse {
-    @SerializedName("success")
-    private boolean success;
-
-    @SerializedName("match")
-    private boolean match;
-
-    @SerializedName("message")
-    private String message;
-
+public class SwipeStatsResponse {
     @SerializedName("swipes_remaining")
     private Integer swipesRemaining; // null si es premium
 
     @SerializedName("is_premium")
     private boolean isPremium;
 
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public boolean isMatch() {
-        return match;
-    }
-
-    public String getMessage() {
-        return message;
-    }
+    @SerializedName("daily_limit")
+    private int dailyLimit;
 
     public Integer getSwipesRemaining() {
         return swipesRemaining;
@@ -44,6 +26,14 @@ public class SwipeResponse {
 
     public void setPremium(boolean premium) {
         isPremium = premium;
+    }
+
+    public int getDailyLimit() {
+        return dailyLimit;
+    }
+
+    public void setDailyLimit(int dailyLimit) {
+        this.dailyLimit = dailyLimit;
     }
 }
 
