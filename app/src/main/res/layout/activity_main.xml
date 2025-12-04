@@ -25,10 +25,18 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="385dp"
+            android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="32dp">
+
+            <ImageView
+                android:id="@+id/imageLogo"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_marginBottom="16dp"
+                android:src="@mipmap/ic_launcher"
+                android:contentDescription="@string/app_name" />
 
             <TextView
                 android:id="@+id/textView"
